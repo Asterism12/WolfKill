@@ -2,11 +2,11 @@
     "$schema": "https://awesome.cqp.moe/schema/app/v9/app-schema.json",
     "ret": 1,
     "apiver": 9,
-    "name": "填写应用名称",
+    "name": "WolfKill",
     "version": "1.0.0",
     "version_id": 1,
-    "author": "填写你的名字或 Id",
-    "description": "填写你的应用描述",
+    "author": "Asterism",
+    "description": "自助法官",
     "event": [ // 可以修改 priority 来调整插件的优先级, 其它字段不可修改, 否则将无法使用
         {
             "id": 1003,
