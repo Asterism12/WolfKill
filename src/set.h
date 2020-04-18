@@ -1,12 +1,12 @@
 #pragma once
 #include <cqcppsdk/cqcppsdk.h>
 
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include <map>
 #include <set>
-#include <cstdlib>
-#include <ctime>
-#include <cstdio>
 #include <string>
 
 #include "player.h"
@@ -23,7 +23,6 @@ public:
     vector<Player> players;
     int64_t owner;
     vector<PlayerRole> rolePool;
-    
 
     void init(const GroupMessageEvent &event) {
         setState = SetState::Setting;
@@ -45,6 +44,16 @@ public:
             addPlayer(event);
         } else if (event.message == ".add" && setState == SetState::Waiting) {
             addBot(event);
+        } else if (event.message == ".go" && setState == SetState::Waiting) {
+            go(event);
+        } else if (event.message == ".seat" && setState == SetState::Day) {
+            seat(event);
+        } else if (event.message == ".seat" && setState == SetState::Night) {
+            seat(event);
+        } else if (event.message == ".seat" && setState == SetState::Analysing) {
+            seat(event);
+        } else if (event.message == ".role" && setState == SetState::Analysing) {
+            analyse(event);
         }
     }
 
@@ -61,7 +70,7 @@ private:
             rolePool.push_back(PlayerRole::Wolf);
             rolePool.push_back(PlayerRole::Human);
         }
-            
+
         addPlayer(event);
 
         string msg = "本局为预女猎9人局，玩家输入.join加入游戏，房主输入.add添加bot，bot角色限制为民";
@@ -91,6 +100,15 @@ private:
     }
 
     void addPlayer(const GroupMessageEvent &event) {
+        /*
+        for (int64_t pl : playersNo) {
+            if (pl == event.message_id) {
+                string msg = "你已经参加过了。";
+                send_group_message(event.group_id, msg);
+                return;
+            }
+        }
+        */
         if (playerNum == playerMaxNum) {
             string msg =
                 "最大人数" + to_string(playerMaxNum) + "人，当前人数" + to_string(playerNum) + "人，已达到人数上线";
@@ -129,6 +147,7 @@ private:
     }
 
     void go(const GroupMessageEvent &event) {
+        setState = SetState::Night;
         srand(time(0));
         int i = 0;
         while (rolePool.size() > 0) {
@@ -136,5 +155,120 @@ private:
             players.push_back(Player(rolePool[res], playersNo[i]));
             rolePool.erase(rolePool.begin() + res);
         }
+
+        seat(event);
+        string msg = "随时使用.seat查看座位表\n";
+        msg += "第一天黑夜，请检查自己的私聊信息";
+        send_group_message(event.group_id, msg);
+    }
+
+    void seat(const GroupMessageEvent &event) {
+        string msg = "座位表：（QQ号码为-1为bot）\n";
+        for (int i = 0; i < players.size(); i++) {
+            if (players[i].playerState == PlayerState::Die) {
+                msg += "[" + to_string(i) + "] " + to_string(players[i].playerNo) + '\n';
+            } else {
+                msg += "[" + to_string(i) + "] " + to_string(players[i].playerNo) + "(Die)" + '\n';
+            }
+        }
+        send_group_message(event.group_id, msg);
+    }
+
+    void night(const GroupMessageEvent &event) {
+        string msg;
+        vector<int64_t> wolfs;
+        for (int i = 0; i < players.size(); i++) {
+            if (players[i].playerRole == PlayerRole::Wolf || players[i].playerRole == PlayerRole::WhiteWolf) {
+                wolfs.push_back(i);
+            }
+        }
+        for (Player pl : players) {
+            switch (pl.playerRole) {
+            case PlayerRole::Prophet:
+                msg = "你的身份是预言家，请选择今晚的验人";
+                msg += "为减少场外，夜间狼人行动会向你发送验证码";
+                break;
+            case PlayerRole::Witch:
+                msg = "你的身份是女巫，等待狼人行动\n";
+                msg += "为减少场外，夜间狼人行动会向你发送验证码";
+                break;
+            case PlayerRole::Hunter:
+                msg = "你的身份是猎人，等待女巫行动\n";
+                msg += "为减少场外，夜间狼人行动会向你发送验证码";
+                break;
+            case PlayerRole::Wolf:
+                msg = "你的身份是狼人，请选择今晚的刀口，使用.+n刀座位号为n的人，如.1\n";
+                msg += "在消息前+.可以把信息传给狼队友，如.我倒钩。仅限晚上生效";
+                msg += "狼团队:";
+                for (int64_t wolf : wolfs) {
+                    msg += to_string(wolf) + ".";
+                }
+                break;
+            case PlayerRole::Human:
+                msg = "你的身份是平民，为减少场外，夜间狼人行动会向你发送验证码";
+                break;
+            default:
+                break;
+            }
+            send_private_message(pl.playerNo, msg);
+        }
+    }
+
+    void day(const GroupMessageEvent &event) {
+        winCheck(event);
+
+        string msg = "天亮了\n";
+        msg += "剩余玩家数：" + to_string(playerNum);
+        msg += "房主可使用.+数字选择相应座位号的抗推的玩家，如.1";
+        send_group_message(event.group_id, msg);
+    }
+
+    void winCheck(const GroupMessageEvent &event) {
+        int humanNum = 0, spiritNum = 0, wolfNum = 0;
+        for (int i = 0; i < players.size(); i++) {
+            if (players[i].playerRole == PlayerRole::Wolf || players[i].playerRole == PlayerRole::WhiteWolf) {
+                wolfNum++;
+            } else if (players[i].playerRole == PlayerRole::Human) {
+                humanNum++;
+            } else {
+                spiritNum++;
+            }
+        }
+        if (wolfNum == 0) {
+            string msg = "狼人全灭，好人胜利\n";
+            send_group_message(event.group_id, msg);
+            setState = SetState::Analysing;
+        }
+        if (humanNum == 0 || spiritNum == 0) {
+            string msg = "狼人屠边胜\n";
+            send_group_message(event.group_id, msg);
+            setState = SetState::Analysing;
+        }
+    }
+    
+    void analyse(const GroupMessageEvent &event) {
+
+        string msg = "使用.exit退出游戏状态，使用.role查看身份信息\n";
+    }
+
+    void roleMessage(const GroupMessageEvent &event) {
+        string msg = "身份表：\n";
+        for (int i = 0; i < players.size(); i++) {
+            switch (players[i].playerRole) {
+            case PlayerRole::Human:
+                msg += "[" + to_string(i) + "] 平民" + '\n';
+            case PlayerRole::Hunter:
+                msg += "[" + to_string(i) + "] 猎人" + '\n';
+            case PlayerRole::Prophet:
+                msg += "[" + to_string(i) + "] 预言家" + '\n';
+            case PlayerRole::Witch:
+                msg += "[" + to_string(i) + "] 女巫" + '\n';
+            case PlayerRole::Wolf:
+                msg += "[" + to_string(i) + "] 狼人" + '\n';
+            default:
+                break;
+            }
+        }
+        send_group_message(event.group_id, msg);
     }
 };
