@@ -4,10 +4,36 @@
 
 #include <cqcppsdk/cqcppsdk.h>
 
+#include "set.h"
+
+//#include "controller.h"
+
 using namespace cq;
 using namespace std;
 using Message = cq::message::Message;
 using MessageSegment = cq::message::MessageSegment;
+
+map<int64_t, Set> gamingGroups;
+
+void groupControl(const GroupMessageEvent &event) {
+    bool isGaming = gamingGroups.count(event.group_id);
+    SetState setState = isGaming ? gamingGroups[event.group_id].SetState : SetState::Uninitialized;
+    if (event.message == ".start") {
+        if (isGaming) {
+            string msg = "本群已在游戏中！输入exit强制退出游戏模式";
+            send_group_message(event.group_id, msg);
+        } else {
+            gamingGroups.insert(pair<int64_t, Set>(event.group_id, Set()));
+            gamingGroups[event.group_id].init(event);
+        }
+    } else if (event.message == ".9" && setState == SetState::Setting) {
+
+    } else if (event.message == "exit" && isGaming) {
+        gamingGroups.erase(event.group_id);
+        string msg = "已强制退出游戏模式";
+        send_group_message(event.group_id, msg);
+    }
+}
 
 CQ_INIT {
     on_enable([] { logging::info("启用", "插件已启用"); });
@@ -28,32 +54,14 @@ CQ_INIT {
     });
 
     on_group_message([](const GroupMessageEvent &event) {
-        static const set<int64_t> ENABLED_GROUPS = {123456, 123457};
-        if (ENABLED_GROUPS.count(event.group_id) == 0) return; // 不在启用的群中, 忽略
-
         try {
-            send_message(event.target, event.message); // 复读
-            auto mem_list = get_group_member_list(event.group_id); // 获取群成员列表
-            string msg;
-            for (auto i = 0; i < min(10, static_cast<int>(mem_list.size())); i++) {
-                msg += "昵称: " + mem_list[i].nickname + "\n"; // 拼接前十个成员的昵称
-            }
-            send_group_message(event.group_id, msg); // 发送群消息
+            groupControl(event);
         } catch (ApiError &) { // 忽略发送失败
         }
         if (event.is_anonymous()) {
             logging::info("群聊", "消息是匿名消息, 匿名昵称: " + event.anonymous.name);
         }
         event.block(); // 阻止当前事件传递到下一个插件
-    });
-
-    on_group_upload([](const auto &event) { // 可以使用 auto 自动推断类型
-        stringstream ss;
-        ss << "您上传了一个文件, 文件名: " << event.file.name << ", 大小(字节): " << event.file.size;
-        try {
-            send_message(event.target, ss.str());
-        } catch (ApiError &) {
-        }
     });
 }
 
