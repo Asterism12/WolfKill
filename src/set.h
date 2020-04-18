@@ -22,6 +22,7 @@ public:
     vector<int64_t> playersNo;
     vector<Player> players;
     int64_t owner;
+    int64_t group;
     vector<PlayerRole> rolePool;
 
     void init(const GroupMessageEvent &event) {
@@ -55,6 +56,21 @@ public:
         } else if (event.message == ".role" && setState == SetState::Analysing) {
             analyse(event);
         }
+    }
+
+    void humanAct(const PrivateMessageEvent &event) {
+    }
+
+    void wolfAct(const PrivateMessageEvent &event) {
+    }
+
+    void prophetAct(const PrivateMessageEvent &event) {
+    }
+
+    void witchAct(const PrivateMessageEvent &event) {
+    }
+
+    void hunterAct(const PrivateMessageEvent &event) {
     }
 
 private:
@@ -100,7 +116,6 @@ private:
     }
 
     void addPlayer(const GroupMessageEvent &event) {
-        /*
         for (int64_t pl : playersNo) {
             if (pl == event.message_id) {
                 string msg = "你已经参加过了。";
@@ -108,7 +123,6 @@ private:
                 return;
             }
         }
-        */
         if (playerNum == playerMaxNum) {
             string msg =
                 "最大人数" + to_string(playerMaxNum) + "人，当前人数" + to_string(playerNum) + "人，已达到人数上线";
@@ -147,6 +161,11 @@ private:
     }
 
     void go(const GroupMessageEvent &event) {
+        if (playerNum != playerMaxNum) {
+            string msg = "人数不足";
+            send_group_message(event.group_id, msg);
+            return;
+        }
         setState = SetState::Night;
         srand(time(0));
         int i = 0;
@@ -257,14 +276,19 @@ private:
             switch (players[i].playerRole) {
             case PlayerRole::Human:
                 msg += "[" + to_string(i) + "] 平民" + '\n';
+                break;
             case PlayerRole::Hunter:
                 msg += "[" + to_string(i) + "] 猎人" + '\n';
+                break;
             case PlayerRole::Prophet:
                 msg += "[" + to_string(i) + "] 预言家" + '\n';
+                break;
             case PlayerRole::Witch:
                 msg += "[" + to_string(i) + "] 女巫" + '\n';
+                break;
             case PlayerRole::Wolf:
                 msg += "[" + to_string(i) + "] 狼人" + '\n';
+                break;
             default:
                 break;
             }

@@ -53,15 +53,43 @@ void groupControl(const GroupMessageEvent &event) {
     }
 }
 
+void privateControl(const PrivateMessageEvent &event) {
+    for (auto it = gamingGroups.begin(); it != gamingGroups.end();it++) {
+        if ((it->second.setState != SetState::Day) || (it->second.setState != SetState::Night)) {
+            continue;
+        }
+        for (Player pl : it->second.players) {
+            if (pl.playerNo == event.message_id) {
+                switch (pl.playerRole) {
+                case PlayerRole::Human:
+                    it->second.humanAct(event);
+                    break;
+                case PlayerRole::Hunter:
+                    it->second.hunterAct(event);
+                    break;
+                case PlayerRole::Prophet:
+                    it->second.prophetAct(event);
+                    break;
+                case PlayerRole::Witch:
+                    it->second.witchAct(event);
+                    break;
+                case PlayerRole::Wolf:
+                    it->second.wolfAct(event);
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+}
+
 CQ_INIT {
     on_enable([] { logging::info("启用", "插件已启用"); });
 
     on_private_message([](const PrivateMessageEvent &event) {
         try {
-            auto msgid = send_private_message(event.user_id, event.message); // 直接复读消息
-            logging::info_success("私聊", "私聊消息复读完成, 消息 Id: " + to_string(msgid));
-            send_message(event.target,
-                         MessageSegment::face(111) + "这是通过 message 模块构造的消息~"); // 使用 message 模块构造消息
+            privateControl(event);
         } catch (ApiError &err) {
             logging::warning("私聊", "私聊消息复读失败, 错误码: " + to_string(err.code));
         }
