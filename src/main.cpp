@@ -1,12 +1,13 @@
 #include <iostream>
 #include <set>
 #include <sstream>
+#include <cstdlib>
+#include <ctime>
+#include <string>
 
 #include <cqcppsdk/cqcppsdk.h>
 
 #include "set.h"
-
-//#include "controller.h"
 
 using namespace cq;
 using namespace std;
@@ -17,7 +18,6 @@ map<int64_t, Set> gamingGroups;
 
 void groupControl(const GroupMessageEvent &event) {
     bool isGaming = gamingGroups.count(event.group_id);
-    SetState setState = isGaming ? gamingGroups[event.group_id].SetState : SetState::Uninitialized;
     if (event.message == ".start") {
         if (isGaming) {
             string msg = "本群已在游戏中！输入exit强制退出游戏模式";
@@ -26,12 +26,30 @@ void groupControl(const GroupMessageEvent &event) {
             gamingGroups.insert(pair<int64_t, Set>(event.group_id, Set()));
             gamingGroups[event.group_id].init(event);
         }
-    } else if (event.message == ".9" && setState == SetState::Setting) {
-
-    } else if (event.message == "exit" && isGaming) {
+    } else if (event.message == ".exit" && isGaming) {
         gamingGroups.erase(event.group_id);
         string msg = "已强制退出游戏模式";
         send_group_message(event.group_id, msg);
+    } else if (event.message == ".rd") {
+        srand(time(0));
+        int res = rand() % 100;
+        string msg = "rd:";
+        msg += to_string(res);
+        send_group_message(event.group_id, msg);
+    } else if (event.message == ".debug") {
+        if (isGaming) {
+            if (gamingGroups[event.group_id].setState == SetState::Setting) {
+                string msg = event.message;
+                send_group_message(event.group_id, msg);
+            }
+        } else {
+            string msg = "游戏模式x";
+            send_group_message(event.group_id, msg);
+        }
+    } else if (event.message[0] == '.') {
+        if (isGaming) {
+            gamingGroups[event.group_id].control(event);
+        }
     }
 }
 
