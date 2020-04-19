@@ -46,6 +46,8 @@ public:
             c9(event);
         } else if (event.message == ".12" && setState == SetState::Setting) {
             c12(event);
+        } else if (event.message == ".5" && setState == SetState::Setting) {
+            c5(event);
         } else if (event.message == ".join" && setState == SetState::Waiting) {
             addPlayer(event);
         } else if (event.message == ".add" && setState == SetState::Waiting) {
@@ -265,6 +267,23 @@ private:
         addPlayer(event);
 
         string msg = "本局为预女猎守白狼王12人局，玩家输入.join加入游戏，房主输入.add添加bot，bot角色限制为民";
+        send_group_message(event.group_id, msg);
+    }
+
+    void c5(const GroupMessageEvent &event) {
+        setState = SetState::Waiting;
+        playerMaxNum = 5;
+        playerNum = 0;
+        owner = event.user_id;
+        rolePool.push_back(PlayerRole::Prophet);
+        rolePool.push_back(PlayerRole::Hunter);
+        rolePool.push_back(PlayerRole::Human);
+        rolePool.push_back(PlayerRole::Wolf);
+        rolePool.push_back(PlayerRole::Human);
+
+        addPlayer(event);
+
+        string msg = "本局为预猎测试5人局，玩家输入.join加入游戏，房主输入.add添加bot，bot角色限制为民";
         send_group_message(event.group_id, msg);
     }
 
