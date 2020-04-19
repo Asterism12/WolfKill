@@ -63,8 +63,6 @@ public:
             seat(event);
         } else if (event.message == ".role" && setState == SetState::Analysing) {
             roleMessage(event);
-        } else if (event.message == ".role") {
-            roleMessage(event);
         } else if (event.message.size() > 2 && event.message[1] == 'k') {
             if (event.user_id != owner) {
                 return;
@@ -79,6 +77,7 @@ public:
                             msg += "该玩家是白痴牌";
                             send_group_message(event.group_id, msg);
 
+                            setState = SetState::Night;
                             night(event);
                         } else {
                             players[no].playerState = PlayerState::Die;
@@ -415,8 +414,7 @@ private:
         }
 
         srand(time(0));
-        int i = 0;
-        while (rolePool.size() > 0) {
+        for (int i = 0; i < playerNum; i++) {
             if (playersNo[i] == -1) {
                 players.push_back(Player(PlayerRole::Human, playersNo[i]));
                 i++;
@@ -428,7 +426,6 @@ private:
                 wolfs.push_back(pair<int16_t, int16_t>(i, -1));
             }
             rolePool.erase(rolePool.begin() + res);
-            i++;
         }
 
         for (auto pl = players.begin(); pl != players.end(); pl++) {
@@ -629,7 +626,7 @@ private:
         if (flag) {
             diePeople.push_back(wolfs[0].second);
             code = rand() % 10000;
-            string msgHuman = "请在私聊中复读验证码：" + to_string(code);
+            string msgHuman = "请在私聊中复读验证码：." + to_string(code);
             string msgWolf = "狼人已锁定目标为" + to_string(wolfs[0].second) + "号玩家，无法继续更改";
             string msgWitch = "今天刀口为" + to_string(wolfs[0].second) + "，使用.save使用解药";
             for (auto pl = players.begin(); pl != players.end(); pl++) {
