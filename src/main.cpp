@@ -82,6 +82,9 @@ void privateControl(const PrivateMessageEvent &event) {
                 case PlayerRole::Wolf:
                     it->second.wolfAct(event);
                     break;
+                case PlayerRole::Idiot:
+                    it->second.idiotAct(event);
+                    break;
                 default:
                     break;
                 }

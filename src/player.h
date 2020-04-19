@@ -3,7 +3,7 @@
 
 using namespace std;
 
-enum class PlayerRole { Human, Wolf, Prophet, Witch, Hunter, Guard, WhiteWolf };
+enum class PlayerRole { Human, Wolf, Prophet, Witch, Hunter, Guard, WhiteWolf, Idiot };
 enum class PlayerState { Ready, Day, Action, Wait, Die, AFK };
 
 class Player {
