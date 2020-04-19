@@ -54,8 +54,11 @@ void groupControl(const GroupMessageEvent &event) {
 }
 
 void privateControl(const PrivateMessageEvent &event) {
+    if (event.message.size() == 0 || event.message[0] != '.') {
+        return;
+    }
     for (auto it = gamingGroups.begin(); it != gamingGroups.end();it++) {
-        if ((it->second.setState != SetState::Day) && (it->second.setState != SetState::Night)) {
+        if (it->second.setState != SetState::Night) {
             continue;
         }
         for (Player pl : it->second.players) {

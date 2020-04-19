@@ -60,6 +60,28 @@ public:
             seat(event);
         } else if (event.message == ".role" && setState == SetState::Analysing) {
             analyse();
+        } else {
+            for (auto pl : players) {
+                if (pl.playerState == PlayerState::Die || !pl.enableShoot) {
+                    return;
+                }
+                if (pl.playerRole == PlayerRole::Hunter && event.user_id == pl.playerNo) {
+                    string tmp = event.message.substr(1, event.message.size());
+                    try {
+                        int16_t no = stoi(tmp);
+                        if (no < playerMaxNum && players[no].playerState != PlayerState::Die) {
+                            players[no].playerState = PlayerState::Die;
+
+                            string msg = to_string(no) + "猎人开枪带走" + to_string(no) + "号玩家";
+                            send_group_message(event.group_id, msg);
+
+                            winCheck();
+                        }
+                    } catch (invalid_argument) {
+                    } catch (out_of_range) {
+                    }
+                }
+            }
         }
     }
 
@@ -86,34 +108,122 @@ public:
         if (event.message[0] != '.' || event.message.size() < 2) {
             return;
         }
-        if (event.message.size() <= 3) {
-            int no = 0;
-            int limit = event.message.size();
-            int i = 0;
-            for (i = 1; i < limit; i++) {
-                if (isdigit(event.message[i])) {
-                    no = no * 10 + (event.message[i] - '0');
-                } else {
-                    break;
+        string msg;
+        string tmp = event.message.substr(1, event.message.size());
+        try {
+            int16_t no = stoi(tmp);
+            for (int i = 0; i < players.size(); i++){
+                if (players[i].playerNo == event.user_id) {
+                    if (no < playerMaxNum && players[no].playerState != PlayerState::Die) {
+                        msg = to_string(i) + "号玩家想刀" + to_string(no) + "号玩家";
+                    } else if (no == 66) {
+                        msg = to_string(i) + "号玩家想空刀";
+                    } else {
+                        return;
+                    }
+                    for (auto wolf : wolfs) {
+                        if (wolf.first == i) {
+                            wolf.second = no;
+                        }
+                    }
+
+                    wolfTeamTalk(msg);
+                    wolfFocusCheck();
                 }
             }
-            if (i == limit) {
-                if (no < playerMaxNum) {
-                    
-                }
-            }
+        } catch (invalid_argument) {
+            wolfTeamTalk(event.message);
+        } catch (out_of_range) {
+            wolfTeamTalk(event.message);
         }
-        string msg = "你不在局里";
+        msg = "你不在局里";
         send_private_message(event.user_id, msg);
     }
 
     void prophetAct(const PrivateMessageEvent &event) {
+        if (event.message.size() == 1) {
+            return;
+        }
+        string tmp = event.message.substr(1, event.message.size());
+        try {
+            int16_t no = stoi(tmp);
+            if (no < playerMaxNum && players[no].playerState != PlayerState::Die) {
+                string msg = to_string(no) + "号玩家的身份是";
+                if (players[no].playerRole == PlayerRole::Wolf || players[no].playerRole == PlayerRole::WhiteWolf) {
+                    msg += "狼人";
+                } else {
+                    msg += "好人";
+                }
+                for (auto pl : players) {
+                    if (pl.playerNo == event.user_id) {
+                        pl.playerState = PlayerState::Wait;
+                        break;
+                    }
+                }
+
+                send_private_message(event.user_id, msg);
+            }
+        } catch (invalid_argument) {
+        } catch (out_of_range) {
+        }
     }
 
     void witchAct(const PrivateMessageEvent &event) {
+        for (auto pl : players) {
+            if (pl.playerNo == event.user_id) {
+                if (event.message == ".save" && !diePeople.empty() && pl.hasAntidote) {
+                    diePeople.clear();
+                    pl.playerState = PlayerState::Wait;
+                    pl.hasAntidote = false;
+
+                    string msg = "你成功使用了解药";
+                    send_private_message(event.user_id, msg);
+                } else if (pl.hasPoison) {
+                    if (event.message.size() == 1) {
+                        return;
+                    }
+                    string tmp = event.message.substr(1, event.message.size());
+                    try {
+                        int16_t no = stoi(tmp);
+                        if (no < playerMaxNum && players[no].playerState != PlayerState::Die) {
+                            diePeople.push_back(no);
+                            pl.playerState = PlayerState::Wait;
+                            pl.hasPoison = false;
+                            if (players[no].playerRole == PlayerRole::Hunter) {
+                                players[no].enableShoot = false;
+
+                                string msgToHunter = "你吃了女巫的毒，无法开枪";
+                                send_private_message(players[no].playerNo, msgToHunter);
+                            }
+
+                            string msg = "你成功使用了毒药";
+                            send_private_message(event.user_id, msg);
+                        }
+                    } catch (invalid_argument) {
+                    } catch (out_of_range) {
+                    }
+                }
+            }
+        }
     }
 
     void hunterAct(const PrivateMessageEvent &event) {
+        if (to_string(code) == event.message) {
+            for (Player pl : players) {
+                if (pl.playerNo == event.user_id) {
+                    pl.playerState = PlayerState::Wait;
+
+                    string msg = "验证成功";
+                    send_private_message(event.user_id, msg);
+                    return;
+                }
+            }
+            string msg = "你不在局里";
+            send_private_message(event.user_id, msg);
+        } else {
+            string msg = "验证失败，当前验证码为：" + to_string(code);
+            send_private_message(event.user_id, msg);
+        }
     }
 
 private:
@@ -242,6 +352,9 @@ private:
     }
 
     void night(const GroupMessageEvent &event) {
+        for (auto wolf : wolfs) {
+            wolf.second = -1;
+        }
         string msg;
         for (Player pl : players) {
             if (pl.playerState == PlayerState::Day) {
@@ -254,7 +367,7 @@ private:
                 break;
             case PlayerRole::Witch:
                 msg = "你的身份是女巫，等待狼人行动\n";
-                msg += "为减少场外，夜间狼人行动会向你发送验证码";
+                msg += ".+n向指定目标使用毒药，如.1，如果你还有解药，狼人刀人后会通知你";
                 break;
             case PlayerRole::Hunter:
                 msg = "你的身份是猎人，等待女巫行动\n";
@@ -390,8 +503,8 @@ private:
             diePeople.push_back(wolfs[0].second);
             code = rand() % 10000;
             string msgHuman = "请在私聊中复读验证码：" + to_string(code);
-            string msgWolf = "狼人已锁定目标为wolfs[0].second，无法继续更改";
-            string msgWitch = "今天刀口为" + to_string(wolfs[0].second);
+            string msgWolf = "狼人已锁定目标为" + to_string(wolfs[0].second) + "号玩家，无法继续更改";
+            string msgWitch = "今天刀口为" + to_string(wolfs[0].second) + "，使用.save使用解药";
             for (auto pl : players) {
                 if (pl.playerState == PlayerState::Die) {
                     continue;
@@ -422,7 +535,7 @@ private:
     void die(int16_t no) {
         players[no].playerState = PlayerState::Die;
         if (players[no].playerRole == PlayerRole::Wolf) {
-            for (auto it = wolfs.begin(); it != wolfs.end();it++) {
+            for (auto it = wolfs.begin(); it != wolfs.end(); it++) {
                 if (it->first == no) {
                     wolfs.erase(it);
                     break;
