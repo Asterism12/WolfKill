@@ -55,11 +55,14 @@ void groupControl(const GroupMessageEvent &event) {
 
 void privateControl(const PrivateMessageEvent &event) {
     for (auto it = gamingGroups.begin(); it != gamingGroups.end();it++) {
-        if ((it->second.setState != SetState::Day) || (it->second.setState != SetState::Night)) {
+        if ((it->second.setState != SetState::Day) && (it->second.setState != SetState::Night)) {
             continue;
         }
         for (Player pl : it->second.players) {
-            if (pl.playerNo == event.message_id) {
+            if (pl.playerNo == event.user_id) {
+                if (pl.playerState != PlayerState::Action) {
+                    return;
+                }
                 switch (pl.playerRole) {
                 case PlayerRole::Human:
                     it->second.humanAct(event);

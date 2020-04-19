@@ -1,6 +1,7 @@
 #pragma once
 #include <cqcppsdk/cqcppsdk.h>
 
+#include <ctype.h>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
@@ -24,6 +25,10 @@ public:
     int64_t owner;
     int64_t group;
     vector<PlayerRole> rolePool;
+    int32_t code;
+    vector<int16_t> diePeople;
+
+    vector<pair<int16_t, int16_t>> wolfs;
 
     void init(const GroupMessageEvent &event) {
         setState = SetState::Setting;
@@ -54,14 +59,52 @@ public:
         } else if (event.message == ".seat" && setState == SetState::Analysing) {
             seat(event);
         } else if (event.message == ".role" && setState == SetState::Analysing) {
-            analyse(event);
+            analyse();
         }
     }
 
     void humanAct(const PrivateMessageEvent &event) {
+        if (to_string(code) == event.message) {
+            for (Player pl : players) {
+                if (pl.playerNo == event.user_id) {
+                    pl.playerState = PlayerState::Wait;
+
+                    string msg = "验证成功";
+                    send_private_message(event.user_id, msg);
+                    return;
+                }
+            }
+            string msg = "你不在局里";
+            send_private_message(event.user_id, msg);
+        } else {
+            string msg = "验证失败，当前验证码为：" + to_string(code);
+            send_private_message(event.user_id, msg);
+        }
     }
 
     void wolfAct(const PrivateMessageEvent &event) {
+        if (event.message[0] != '.' || event.message.size() < 2) {
+            return;
+        }
+        if (event.message.size() <= 3) {
+            int no = 0;
+            int limit = event.message.size();
+            int i = 0;
+            for (i = 1; i < limit; i++) {
+                if (isdigit(event.message[i])) {
+                    no = no * 10 + (event.message[i] - '0');
+                } else {
+                    break;
+                }
+            }
+            if (i == limit) {
+                if (no < playerMaxNum) {
+                    
+                }
+            }
+        }
+        string msg = "你不在局里";
+        send_private_message(event.user_id, msg);
     }
 
     void prophetAct(const PrivateMessageEvent &event) {
@@ -172,8 +215,13 @@ private:
         while (rolePool.size() > 0) {
             int res = rand() % rolePool.size();
             players.push_back(Player(rolePool[res], playersNo[i]));
+            if (rolePool[res] == PlayerRole::Wolf || rolePool[res] == PlayerRole::WhiteWolf) {
+                wolfs.push_back(pair<int16_t, int16_t>(i, 0));
+            }
             rolePool.erase(rolePool.begin() + res);
         }
+
+        setState = SetState::Night;
 
         seat(event);
         string msg = "随时使用.seat查看座位表\n";
@@ -195,13 +243,10 @@ private:
 
     void night(const GroupMessageEvent &event) {
         string msg;
-        vector<int64_t> wolfs;
-        for (int i = 0; i < players.size(); i++) {
-            if (players[i].playerRole == PlayerRole::Wolf || players[i].playerRole == PlayerRole::WhiteWolf) {
-                wolfs.push_back(i);
-            }
-        }
         for (Player pl : players) {
+            if (pl.playerState == PlayerState::Day) {
+                pl.playerState = PlayerState::Action;
+            }
             switch (pl.playerRole) {
             case PlayerRole::Prophet:
                 msg = "你的身份是预言家，请选择今晚的验人";
@@ -217,10 +262,11 @@ private:
                 break;
             case PlayerRole::Wolf:
                 msg = "你的身份是狼人，请选择今晚的刀口，使用.+n刀座位号为n的人，如.1\n";
-                msg += "在消息前+.可以把信息传给狼队友，如.我倒钩。仅限晚上生效";
+                msg += ".66为空刀\n";
+                msg += "在消息前+.可以把信息传给狼队友，如.我倒钩。仅限晚上生效\n";
                 msg += "狼团队:";
-                for (int64_t wolf : wolfs) {
-                    msg += to_string(wolf) + ".";
+                for (auto wolf : wolfs) {
+                    msg += to_string(wolf.first) + ".";
                 }
                 break;
             case PlayerRole::Human:
@@ -233,16 +279,27 @@ private:
         }
     }
 
-    void day(const GroupMessageEvent &event) {
-        winCheck(event);
+    void day() {
+        for (int16_t person : diePeople) {
+            if (person != 66) {
+                die(person);
+            }
+        }
+        winCheck();
+
+        for (auto pl : players) {
+            if (pl.playerState == PlayerState::Wait) {
+                pl.playerState = PlayerState::Day;
+            }
+        }
 
         string msg = "天亮了\n";
         msg += "剩余玩家数：" + to_string(playerNum);
         msg += "房主可使用.+数字选择相应座位号的抗推的玩家，如.1";
-        send_group_message(event.group_id, msg);
+        send_group_message(group, msg);
     }
 
-    void winCheck(const GroupMessageEvent &event) {
+    void winCheck() {
         int humanNum = 0, spiritNum = 0, wolfNum = 0;
         for (int i = 0; i < players.size(); i++) {
             if (players[i].playerRole == PlayerRole::Wolf || players[i].playerRole == PlayerRole::WhiteWolf) {
@@ -255,19 +312,22 @@ private:
         }
         if (wolfNum == 0) {
             string msg = "狼人全灭，好人胜利\n";
-            send_group_message(event.group_id, msg);
+            send_group_message(group, msg);
             setState = SetState::Analysing;
         }
         if (humanNum == 0 || spiritNum == 0) {
             string msg = "狼人屠边胜\n";
-            send_group_message(event.group_id, msg);
+            send_group_message(group, msg);
             setState = SetState::Analysing;
         }
-    }
-    
-    void analyse(const GroupMessageEvent &event) {
 
+        setState = SetState::Analysing;
+        analyse();
+    }
+
+    void analyse() {
         string msg = "使用.exit退出游戏状态，使用.role查看身份信息\n";
+        send_group_message(group, msg);
     }
 
     void roleMessage(const GroupMessageEvent &event) {
@@ -294,5 +354,85 @@ private:
             }
         }
         send_group_message(event.group_id, msg);
+    }
+
+    void wakeCheck() {
+        for (Player pl : players) {
+            if (pl.playerState == PlayerState::Action) {
+                return;
+            }
+        }
+        setState = SetState::Day;
+        day();
+    }
+
+    void wolfTeamTalk(string msg) {
+        for (auto pl : players) {
+            if (pl.playerRole == PlayerRole::Wolf || pl.playerRole == PlayerRole::WhiteWolf) {
+                send_private_message(pl.playerNo, msg);
+            }
+        }
+    }
+
+    void wolfFocusCheck() {
+        bool flag = false;
+        if (wolfs.size() == 1) {
+            flag = true;
+        } else {
+            for (int i = 1; i < wolfs.size(); i++) {
+                if (wolfs[i].second != wolfs[i - 1].second) {
+                    return;
+                }
+            }
+            flag = true;
+        }
+        if (flag) {
+            diePeople.push_back(wolfs[0].second);
+            code = rand() % 10000;
+            string msgHuman = "请在私聊中复读验证码：" + to_string(code);
+            string msgWolf = "狼人已锁定目标为wolfs[0].second，无法继续更改";
+            string msgWitch = "今天刀口为" + to_string(wolfs[0].second);
+            for (auto pl : players) {
+                if (pl.playerState == PlayerState::Die) {
+                    continue;
+                }
+                switch (pl.playerRole) {
+                case PlayerRole::Human:
+                    send_private_message(pl.playerNo, msgHuman);
+                    break;
+                case PlayerRole::Hunter:
+                    send_private_message(pl.playerNo, msgHuman);
+                    break;
+                case PlayerRole::Wolf:
+                    pl.playerState = PlayerState::Wait;
+                    send_private_message(pl.playerNo, msgWolf);
+                    break;
+                case PlayerRole::Witch:
+                    if (pl.hasAntidote) {
+                        send_private_message(pl.playerNo, msgWitch);
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+            wakeCheck();
+        }
+    }
+    void die(int16_t no) {
+        players[no].playerState = PlayerState::Die;
+        if (players[no].playerRole == PlayerRole::Wolf) {
+            for (auto it = wolfs.begin(); it != wolfs.end();it++) {
+                if (it->first == no) {
+                    wolfs.erase(it);
+                    break;
+                }
+            }
+        }
+
+        string msg = to_string(no) + "号玩家倒牌";
+        send_group_message(group, msg);
+
+        winCheck();
     }
 };
