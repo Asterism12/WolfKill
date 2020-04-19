@@ -333,10 +333,8 @@ private:
         rolePool.push_back(PlayerRole::Prophet);
         rolePool.push_back(PlayerRole::Hunter);
         rolePool.push_back(PlayerRole::Witch);
-        rolePool.push_back(PlayerRole::Guard);
-        rolePool.push_back(PlayerRole::WhiteWolf);
-        rolePool.push_back(PlayerRole::Human);
-        for (int i = 0; i < 3; i++) {
+        rolePool.push_back(PlayerRole::Idiot);
+        for (int i = 0; i < 4; i++) {
             rolePool.push_back(PlayerRole::Wolf);
             rolePool.push_back(PlayerRole::Human);
         }
