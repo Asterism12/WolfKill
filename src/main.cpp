@@ -66,6 +66,30 @@ void privateControl(const PrivateMessageEvent &event) {
                 if (pl.playerState != PlayerState::Action) {
                     return;
                 }
+                if (event.message == ".mine") {
+                    switch (pl.playerRole) {
+                    case PlayerRole::Human:
+                        send_private_message(event.user_id, "平民牌");
+                        break;
+                    case PlayerRole::Hunter:
+                        send_private_message(event.user_id, "猎人牌");
+                        break;
+                    case PlayerRole::Prophet:
+                        send_private_message(event.user_id, "预言家牌");
+                        break;
+                    case PlayerRole::Witch:
+                        send_private_message(event.user_id, "女巫牌");
+                        break;
+                    case PlayerRole::Wolf:
+                        send_private_message(event.user_id, "狼人牌");
+                        break;
+                    case PlayerRole::Idiot:
+                        send_private_message(event.user_id, "白痴牌");
+                        break;
+                    default:
+                        break;
+                    }
+                }
                 switch (pl.playerRole) {
                 case PlayerRole::Human:
                     it->second.humanAct(event);

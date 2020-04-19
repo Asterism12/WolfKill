@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <Windows.h>
 
 #include "player.h"
 using namespace cq;
@@ -412,18 +413,18 @@ private:
         }
 
         srand(time(0));
-        for (int i = 0; i < playerNum; i++) {
+        for (int i = 0; i < playerMaxNum; i++) {
             if (playersNo[i] == -1) {
                 players.push_back(Player(PlayerRole::Human, playersNo[i]));
-                i++;
-                continue;
+                send_group_message(group, to_string(i));
+            } else {
+                int res = rand() % rolePool.size();
+                players.push_back(Player(rolePool[res], playersNo[i]));
+                if (rolePool[res] == PlayerRole::Wolf || rolePool[res] == PlayerRole::WhiteWolf) {
+                    wolfs.push_back(pair<int16_t, int16_t>(i, -1));
+                }
+                rolePool.erase(rolePool.begin() + res);
             }
-            int res = rand() % rolePool.size();
-            players.push_back(Player(rolePool[res], playersNo[i]));
-            if (rolePool[res] == PlayerRole::Wolf || rolePool[res] == PlayerRole::WhiteWolf) {
-                wolfs.push_back(pair<int16_t, int16_t>(i, -1));
-            }
-            rolePool.erase(rolePool.begin() + res);
         }
 
         for (auto pl = players.begin(); pl != players.end(); pl++) {
@@ -457,6 +458,7 @@ private:
             wolf->second = -1;
         }
         msg = "";
+        int num = 0;
         for (auto pl = players.begin(); pl != players.end(); pl++) {
             if (pl->playerNo == -1) {
                 pl->playerState = PlayerState::Wait;
@@ -471,21 +473,25 @@ private:
             case PlayerRole::Prophet:
                 msg = "你的身份是预言家，.+n选择今晚的验人，如.1";
                 send_private_message(pl->playerNo, msg);
+                num++;
                 break;
             case PlayerRole::Witch:
                 msg = "你的身份是女巫，等待狼人行动\n";
                 msg += ".+n向指定目标使用毒药，如.1，如果你还有解药，狼人刀人后会通知你";
                 msg += "输入.nop放弃本晚行动";
+                num++;
                 send_private_message(pl->playerNo, msg);
                 break;
             case PlayerRole::Hunter:
                 msg = "你的身份是猎人，女巫如果放毒会通知你\n";
                 msg += "为减少场外，夜间狼人行动会向你发送验证码\n";
                 msg += "白天使用.+n指定目标开枪，如.1";
+                num++;
                 send_private_message(pl->playerNo, msg);
                 break;
             case PlayerRole::Idiot:
                 msg = "你的身份是白痴，为减少场外，夜间狼人行动会向你发送验证码\n";
+                num++;
                 send_private_message(pl->playerNo, msg);
                 break;
             case PlayerRole::Wolf:
@@ -496,16 +502,19 @@ private:
                 for (auto wolf : wolfs) {
                     msg += to_string(wolf.first) + ".";
                 }
+                num++;
                 send_private_message(pl->playerNo, msg);
                 break;
             case PlayerRole::Human:
                 msg = "你的身份是平民，为减少场外，夜间狼人行动会向你发送验证码";
+                num++;
                 send_private_message(pl->playerNo, msg);
                 break;
             default:
                 break;
             }
         }
+        send_group_message(group, to_string(num));
     }
 
     void day() {
