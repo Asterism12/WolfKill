@@ -75,8 +75,11 @@ public:
                     if (no < playerMaxNum && players[no].playerState != PlayerState::Die) {
                         if (players[no].playerRole == PlayerRole::Idiot) {
                             string msg = "抗推" + to_string(no) + "号玩家\n";
+
                             msg += "该玩家是白痴牌";
                             send_group_message(event.group_id, msg);
+
+                            night(event);
                         } else {
                             players[no].playerState = PlayerState::Die;
 
@@ -350,7 +353,6 @@ private:
         playerMaxNum = 3;
         playerNum = 0;
         owner = event.user_id;
-        rolePool.push_back(PlayerRole::Witch);
         rolePool.push_back(PlayerRole::Human);
         rolePool.push_back(PlayerRole::Wolf);
         rolePool.push_back(PlayerRole::Idiot);
@@ -639,6 +641,9 @@ private:
                     send_private_message(pl->playerNo, msgHuman);
                     break;
                 case PlayerRole::Hunter:
+                    send_private_message(pl->playerNo, msgHuman);
+                    break;
+                case PlayerRole::Idiot:
                     send_private_message(pl->playerNo, msgHuman);
                     break;
                 case PlayerRole::Wolf:
