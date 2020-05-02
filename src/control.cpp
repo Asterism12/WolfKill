@@ -84,7 +84,8 @@ void groupControl(const GroupMessageEvent &event) {
 }
 
 void privateControl(const PrivateMessageEvent &event) {
-    if (event.message.size() == 0 || event.message[0] != '.') {
+    vector<string> command = commandAnalyse(event.message);
+    if (command[0] != ".") {
         return;
     }
     for (auto it = gamingGroups.begin(); it != gamingGroups.end(); it++) {
@@ -97,11 +98,11 @@ void privateControl(const PrivateMessageEvent &event) {
                     return;
                 }
                 string msg;
-                if (event.message == ".code") {
+                if (command[0] == "code") {
                     msg = to_string(it->second.code);
                     send_private_message(event.user_id, msg);
                 }
-                if (event.message == ".mine") {
+                if (command[0] == "mine") {
                     switch (pl.playerRole) {
                     case PlayerRole::Human:
                         msg = "你的身份是平民，为减少场外，夜间狼人行动会向你发送验证码";
