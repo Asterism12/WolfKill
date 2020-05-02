@@ -452,69 +452,17 @@ private:
     }
 
     void night(const GroupMessageEvent &event) {
-        string msg = "黑夜，请检查自己的私聊信息";
+        for (auto pl = players.begin(); pl != players.end(); pl++) {
+            if (pl->playerState == PlayerState::Day) {
+                pl->playerState = PlayerState::Action;
+            }
+        }
+
+        string msg = "黑夜，使用.mine查看自己的身份信息";
         send_group_message(event.group_id, msg);
         for (auto wolf = wolfs.begin(); wolf != wolfs.end(); wolf++) {
             wolf->second = -1;
         }
-        msg = "";
-        int num = 0;
-        for (auto pl = players.begin(); pl != players.end(); pl++) {
-            if (pl->playerNo == -1) {
-                pl->playerState = PlayerState::Wait;
-                continue;
-            }
-            if (pl->playerState == PlayerState::Day) {
-                pl->playerState = PlayerState::Action;
-            } else {
-                continue;
-            }
-            switch (pl->playerRole) {
-            case PlayerRole::Prophet:
-                msg = "你的身份是预言家，.+n选择今晚的验人，如.1";
-                send_private_message(pl->playerNo, msg);
-                num++;
-                break;
-            case PlayerRole::Witch:
-                msg = "你的身份是女巫，等待狼人行动\n";
-                msg += ".+n向指定目标使用毒药，如.1，如果你还有解药，狼人刀人后会通知你";
-                msg += "输入.nop放弃本晚行动";
-                num++;
-                send_private_message(pl->playerNo, msg);
-                break;
-            case PlayerRole::Hunter:
-                msg = "你的身份是猎人，女巫如果放毒会通知你\n";
-                msg += "为减少场外，夜间狼人行动会向你发送验证码\n";
-                msg += "白天使用.+n指定目标开枪，如.1";
-                num++;
-                send_private_message(pl->playerNo, msg);
-                break;
-            case PlayerRole::Idiot:
-                msg = "你的身份是白痴，为减少场外，夜间狼人行动会向你发送验证码\n";
-                num++;
-                send_private_message(pl->playerNo, msg);
-                break;
-            case PlayerRole::Wolf:
-                msg = "你的身份是狼人，请选择今晚的刀口，使用.+n刀座位号为n的人，如.1\n";
-                msg += ".66为空刀\n";
-                msg += "在消息前+.可以把信息传给狼队友，如.我倒钩。仅限晚上生效\n";
-                msg += "狼团队:";
-                for (auto wolf : wolfs) {
-                    msg += to_string(wolf.first) + ".";
-                }
-                num++;
-                send_private_message(pl->playerNo, msg);
-                break;
-            case PlayerRole::Human:
-                msg = "你的身份是平民，为减少场外，夜间狼人行动会向你发送验证码";
-                num++;
-                send_private_message(pl->playerNo, msg);
-                break;
-            default:
-                break;
-            }
-        }
-        send_group_message(group, to_string(num));
     }
 
     void day() {
