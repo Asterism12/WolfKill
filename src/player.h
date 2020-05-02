@@ -23,7 +23,4 @@ public:
         hasPoison = true;
         enableShoot = true;
     }
-
-    void action();
-    void wait();
 };

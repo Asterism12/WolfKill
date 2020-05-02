@@ -37,12 +37,18 @@ void groupControl(const GroupMessageEvent &event) {
                 d = stoi(command[3]);
                 break;
             default:
-                string err1 = "格式错误，rd，rd [-d]，rd [-r] [-d]";
+                string err1 = "格式错误，rd，rd [-range]，rd [-dicenumber] [-range]";
                 send_group_message(event.group_id, err1);
                 return;
             }
         } catch (invalid_argument) {
+            string err1 = "格式错误，rd，rd [-range]，rd [-dicenumber] [-range]";
+            send_group_message(event.group_id, err1);
+            return;
         } catch (out_of_range) {
+            string err1 = "请输入一个较小的值";
+            send_group_message(event.group_id, err1);
+            return;
         }
         if (r > 20 || d > 1000000) {
             string err2 = "请输入一个较小的值";
@@ -63,9 +69,9 @@ void groupControl(const GroupMessageEvent &event) {
             for (int i = 0; i < r; i++) {
                 int res = dist(gen);
                 sum += res;
-                msg += to_string(res) + '\n';
+                msg += to_string(res) + ',';
             }
-            msg += "total:" + to_string(sum);
+            msg += "\ntotal:" + to_string(sum);
             send_group_message(event.group_id, msg);
         }
     } else if (command[1] == "debug") {
@@ -111,7 +117,7 @@ void privateControl(const PrivateMessageEvent &event) {
                     case PlayerRole::Hunter:
                         msg = "你的身份是猎人，女巫如果放毒会通知你，\n";
                         msg += "为减少场外，夜间狼人行动会向你发送验证码，\n";
-                        msg += "白天使用.+n指定目标开枪，如.1";
+                        msg += "死亡后使用.+n指定目标开枪，如.1";
                         send_private_message(event.user_id, msg);
                         break;
                     case PlayerRole::Prophet:
@@ -202,4 +208,8 @@ vector<string> commandAnalyse(string message) {
     }
 
     return res;
+}
+
+void destorySet(int64_t set) {
+
 }

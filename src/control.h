@@ -4,8 +4,6 @@
 #include <iostream>
 #include <set>
 #include <sstream>
-//#include <cstdlib>
-//#include <ctime>
 #include <string>
 #include <random>
 
@@ -17,3 +15,4 @@ using namespace std;
 vector<string> commandAnalyse(string message);
 void groupControl(const GroupMessageEvent &event);
 void privateControl(const PrivateMessageEvent &event);
+void destorySet(int64_t set);
