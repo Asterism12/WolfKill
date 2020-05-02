@@ -3,25 +3,72 @@ map<int64_t, Set> gamingGroups;
 
 void groupControl(const GroupMessageEvent &event) {
     bool isGaming = gamingGroups.count(event.group_id);
-    if (event.message == ".start") {
+    vector<string> command = commandAnalyse(event.message);
+    if (command[0] != ".") {
+        return;
+    }
+    if (command[1] == "start") {
         if (isGaming) {
             string msg = "本群已在游戏中！输入exit强制退出游戏模式";
             send_group_message(event.group_id, msg);
         } else {
+            //添加一个对局
             gamingGroups.insert(pair<int64_t, Set>(event.group_id, Set()));
             gamingGroups[event.group_id].init(event);
         }
-    } else if (event.message == ".exit" && isGaming) {
+    } else if (command[1] == "exit" && isGaming) {
+        //移除一个对局
         gamingGroups.erase(event.group_id);
+
         string msg = "已强制退出游戏模式";
         send_group_message(event.group_id, msg);
-    } else if (event.message == ".rd") {
-        srand(time(0));
-        int res = rand() % 100;
-        string msg = "rd:";
-        msg += to_string(res);
-        send_group_message(event.group_id, msg);
-    } else if (event.message == ".debug") {
+    } else if (command[1] == "rd") {
+        int r = 1;
+        int d = 100;
+        try {
+            switch (command.size()) {
+            case 2:
+                break;
+            case 3:
+                d = stoi(command[2]);
+                break;
+            case 4:
+                r = stoi(command[2]);
+                d = stoi(command[3]);
+                break;
+            default:
+                string err1 = "格式错误，rd，rd [-d]，rd [-r] [-d]";
+                send_group_message(event.group_id, err1);
+                return;
+            }
+        } catch (invalid_argument) {
+        } catch (out_of_range) {
+        }
+        if (r > 20 || d > 1000000) {
+            string err2 = "请输入一个较小的值";
+            send_group_message(event.group_id, err2);
+            return;
+        }
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> dist(0, d);
+        if (r == 1) {
+            int res = dist(gen);
+            string msg = "rd:";
+            msg += to_string(res);
+            send_group_message(event.group_id, msg);
+        } else {
+            int sum = 0;
+            string msg = "rd:\n";
+            for (int i = 0; i < r; i++) {
+                int res = dist(gen);
+                sum += res;
+                msg += to_string(res) + '\n';
+            }
+            msg += "total:" + to_string(sum);
+            send_group_message(event.group_id, msg);
+        }
+    } else if (command[1] == "debug") {
         if (isGaming) {
             if (gamingGroups[event.group_id].setState == SetState::Setting) {
                 string msg = event.message;
@@ -31,10 +78,8 @@ void groupControl(const GroupMessageEvent &event) {
             string msg = "游戏模式x";
             send_group_message(event.group_id, msg);
         }
-    } else if (event.message[0] == '.') {
-        if (isGaming) {
-            gamingGroups[event.group_id].control(event);
-        }
+    } else if (isGaming) {
+        gamingGroups[event.group_id].control(event);
     }
 }
 
@@ -126,7 +171,7 @@ void privateControl(const PrivateMessageEvent &event) {
 }
 
 vector<string> commandAnalyse(string message) {
-    vector<string> res;
+    vector<string> res = {"."};
     vector<string> empty = {"!"};
 
     if (message.size() <= 1 || message[0] != '.') {
@@ -135,9 +180,9 @@ vector<string> commandAnalyse(string message) {
 
     int start = 1;
     bool inString = true;
-    for (int i = 1; i < message.size(); i++) {
+    for (int i = 1; i <= message.size(); i++) {
         if (inString) {
-            if (message[i] == ' ' || message[i] == '\n') {
+            if (message[i] == ' ' || message[i] == '\n' || message[i] == '\0') {
                 if (start == i) {
                     return empty;
                 } else {
@@ -146,7 +191,7 @@ vector<string> commandAnalyse(string message) {
                 }
             }
         } else {
-            if (message[i] == ' ' || message[i] == '\n') {
+            if (message[i] == ' ' || message[i] == '\n' || message[i] == '\0') {
                 continue;
             } else {
                 inString = true;
@@ -154,4 +199,6 @@ vector<string> commandAnalyse(string message) {
             }
         }
     }
+
+    return res;
 }
