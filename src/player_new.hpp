@@ -303,7 +303,7 @@ public:
         if (!enableShoot) {
             return;
         }
-        if (command.size != 3) {
+        if (command.size() != 3) {
             return;
         }
         try {
@@ -440,7 +440,7 @@ public:
     }
 
     void act2(vector<string> command, GameSet &set) {
-        if (command.size != 3) {
+        if (command.size() != 3) {
             return;
         }
         try {

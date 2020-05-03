@@ -1,4 +1,7 @@
 #include "set_new.h"
+#include "player_new.hpp"
+#include "control_new.h"
+
 void GameSet::init(vector<string> command, GroupMessageEvent event) {
     state = SetState::Setting;
     group = event.group_id;
@@ -124,35 +127,35 @@ void GameSet::go() {
         int index = dis(gen);
         switch (rolePool[index]) {
         case PlayerRole::Human:
-            players[seat[i]] = Human(seat[i], i);
+            players[seat[i]] = &Human(seat[i], i);
             break;
         case PlayerRole::Wolf:
-            players[seat[i]] = Wolf(seat[i], i);
+            players[seat[i]] = &Wolf(seat[i], i);
             break;
         case PlayerRole::Prophet:
-            players[seat[i]] = Prophet(seat[i], i);
+            players[seat[i]] = &Prophet(seat[i], i);
             break;
         case PlayerRole::Witch:
-            players[seat[i]] = Witch(seat[i], i);
+            players[seat[i]] = &Witch(seat[i], i);
             break;
         case PlayerRole::Hunter:
-            players[seat[i]] = Hunter(seat[i], i);
+            players[seat[i]] = &Hunter(seat[i], i);
             break;
         case PlayerRole::Idiot:
-            players[seat[i]] = Idiot(seat[i], i);
+            players[seat[i]] = &Idiot(seat[i], i);
             break;
         case PlayerRole::Guard:
-            players[seat[i]] = Guard(seat[i], i);
+            players[seat[i]] = &Guard(seat[i], i);
             break;
         case PlayerRole::WhiteWolf:
-            players[seat[i]] = Human(seat[i], i);
+            players[seat[i]] = &Human(seat[i], i);
             break;
         default:
             break;
         }
         rolePool.erase(rolePool.begin() + index);
         if (host == seat[i]) {
-            players[seat[i]].isHost = true;
+            players[seat[i]]->isHost = true;
         }
     }
 
@@ -208,7 +211,7 @@ void GameSet::handleDeathEvent() {
         }
         //判定死亡
         if (vote != 0) {
-            kill(players[death->first].seat);
+            kill(players[death->first]->seat);
             deathNote.erase(death);
         }
     }
@@ -216,8 +219,8 @@ void GameSet::handleDeathEvent() {
 
 void GameSet::setPlayersState(PlayerState state, PlayerState lastState) {
     for (auto pl = players.begin(); pl != players.end(); pl++) {
-        if (pl->second.state == lastState) {
-            pl->second.state = state;
+        if (pl->second->state == lastState) {
+            pl->second->state = state;
         }
     }
 }
@@ -225,7 +228,7 @@ void GameSet::setPlayersState(PlayerState state, PlayerState lastState) {
 void GameSet::seatShow() {
     string msg = "座位表：\n";
     for (int i = 0; i < seat.size(); i++) {
-        if (players[seat[i]].state == PlayerState::Die) {
+        if (players[seat[i]]->state == PlayerState::Die) {
             msg += "[" + to_string(i) + "] " + to_string(seat[i]) + '\n';
         } else {
             msg += "[" + to_string(i) + "] " + to_string(seat[i]) + "(Die)" + '\n';
@@ -236,7 +239,7 @@ void GameSet::seatShow() {
 
 void GameSet::daybreakCheck() {
     for (auto pl : players) {
-        if (pl.second.state != PlayerState::Die && pl.second.state != PlayerState::Wait) {
+        if (pl.second->state != PlayerState::Die && pl.second->state != PlayerState::Wait) {
             return;
         }
     }
@@ -298,9 +301,9 @@ void GameSet::receiveGroupMessage(int64_t QQ, vector<string> command) {
             try {
                 int NO = stoi(command[2]);
                 if (NO >= 0 && NO < players.size()) {
-                    if (players[seat[NO]].state == PlayerState::Die) {
+                    if (players[seat[NO]]->state == PlayerState::Die) {
                         send_group_message(group, "该玩家之前已经死亡，请重新选择另一名玩家");
-                    } else if (players[seat[NO]].role == PlayerRole::Idiot) {
+                    } else if (players[seat[NO]]->role == PlayerRole::Idiot) {
                         send_group_message(group, "该玩家的身份为白痴，玩家存活，游戏继续");
                         night();
                     } else {
@@ -316,13 +319,13 @@ void GameSet::receiveGroupMessage(int64_t QQ, vector<string> command) {
         }
     } else if (command[1] == ".shoot" && state == SetState::Night) {
         //猎人开枪
-        if (players[QQ].role == PlayerRole::Hunter && players[QQ].state == PlayerState::Die) {
-            players[QQ].act2(command, *this);
+        if (players[QQ]->role == PlayerRole::Hunter && players[QQ]->state == PlayerState::Die) {
+            players[QQ]->act2(command, *this);
         }
     } else if (command[1] == ".boom" && state == SetState::Day) {
         //白狼自爆
-        if (players[QQ].role == PlayerRole::WhiteWolf && players[QQ].state == PlayerState::Day) {
-            players[QQ].act2(command, *this);
+        if (players[QQ]->role == PlayerRole::WhiteWolf && players[QQ]->state == PlayerState::Day) {
+            players[QQ]->act2(command, *this);
         }
     }
 }
@@ -342,7 +345,7 @@ void GameSet::receivePrivateMessage(int64_t QQ, vector<string> command) {
             return;
         }
     }
-    if (players.count(QQ) == 0 && state != SetState::Waiting) {
+    if (players.count(QQ) == 0) {
         return;
     }
 
@@ -353,10 +356,10 @@ void GameSet::receivePrivateMessage(int64_t QQ, vector<string> command) {
     if (command[1] == "code" && state == SetState::Night) {
         sendPrivateMessage(QQ, "今晚的验证码为." + to_string(code) + " 回复验证码即可验证（注意数字前需要加.）");
     } else if (command[1] == "me" && state == SetState::Night) {
-        players[QQ].me(*this);
+        players[QQ]->me(*this);
     } else if (state == SetState::Night) {
         //各玩家的晚间行动
-        players[QQ].act(command, *this);
+        players[QQ]->act(command, *this);
         daybreakCheck();
     }
 }
@@ -379,35 +382,35 @@ void GameSet::wolfKillCheck() {
         int16_t target = wolfs.begin()->second;
         if (target == 100) {
             for (auto pl = players.begin(); pl != players.end(); pl++) {
-                if (pl->second.role == PlayerRole::Witch && pl->second.state != PlayerState::Die) {
-                    pl->second.react("今晚狼人空刀使用.nop结束行动或可以使用毒药", *this);
+                if (pl->second->role == PlayerRole::Witch && pl->second->state != PlayerState::Die) {
+                    pl->second->react("今晚狼人空刀使用.nop结束行动或可以使用毒药", *this);
                     break;
                 }
             }
         } else {
             deathNote[seat[target]].insert("wolfkill");
             for (auto pl = players.begin(); pl != players.end(); pl++) {
-                if (pl->second.role == PlayerRole::Witch && pl->second.state != PlayerState::Die) {
-                    pl->second.react("今晚" + to_string(target) + "号玩家中刀，可以使用.save命令使用解药", *this);
+                if (pl->second->role == PlayerRole::Witch && pl->second->state != PlayerState::Die) {
+                    pl->second->react("今晚" + to_string(target) + "号玩家中刀，可以使用.save命令使用解药", *this);
                     break;
                 }
             }
         }
         for (auto wolf = wolfs.begin(); wolf != wolfs.end(); wolf++) {
-            players[wolf->first].state = PlayerState::Wait;
+            players[wolf->first]->state = PlayerState::Wait;
         }
         daybreakCheck();
     }
 }
 
 void GameSet::kill(int16_t seatNumber) {
-    players[seat[seatNumber]].state = PlayerState::Die;
+    players[seat[seatNumber]]->state = PlayerState::Die;
     send_group_message(group, to_string(seatNumber) + "号玩家死亡");
 
-    if (players[seat[seatNumber]].role == PlayerRole::Wolf || players[seat[seatNumber]].role == PlayerRole::WhiteWolf) {
+    if (players[seat[seatNumber]]->role == PlayerRole::Wolf || players[seat[seatNumber]]->role == PlayerRole::WhiteWolf) {
         wolfs.erase(seatNumber);
         wolfNum--;
-    } else if (players[seat[seatNumber]].role == PlayerRole::Human) {
+    } else if (players[seat[seatNumber]]->role == PlayerRole::Human) {
         humanNum--;
     } else {
         godNum--;
@@ -435,7 +438,7 @@ void GameSet::analyse() {
 void GameSet::roleMessage() {
     string msg = "身份表：\n";
     for (int i = 0; i < players.size(); i++) {
-        switch (players[i].role) {
+        switch (players[i]->role) {
         case PlayerRole::Human:
             msg += "[" + to_string(i) + "] 平民" + '\n';
             break;

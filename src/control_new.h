@@ -2,12 +2,15 @@
 #include <cqcppsdk/cqcppsdk.h>
 
 #include <iostream>
+#include <random>
 #include <set>
 #include <sstream>
 #include <string>
-#include <random>
+#include <map>
 
-#include "set.h"
+#include <cqcppsdk/cqcppsdk.h>
+
+#include "set_new.h"
 
 using namespace cq;
 using namespace std;
