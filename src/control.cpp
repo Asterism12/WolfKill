@@ -50,9 +50,14 @@ void groupControl(const GroupMessageEvent &event) {
             send_group_message(event.group_id, err1);
             return;
         }
-        if (r > 20 || d > 1000000) {
-            string err2 = "请输入一个较小的值";
+        if (r <= 0 || d <= 0) {
+            string err2 = "请输入一个正值";
             send_group_message(event.group_id, err2);
+            return;
+        }
+        if (r > 20 || d > 1000000) {
+            string err3 = "请输入一个较小的值";
+            send_group_message(event.group_id, err3);
             return;
         }
         std::random_device rd;
@@ -211,5 +216,5 @@ vector<string> commandAnalyse(string message) {
 }
 
 void destorySet(int64_t set) {
-
+    gamingGroups.erase(set);
 }

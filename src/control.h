@@ -7,7 +7,8 @@
 #include <string>
 #include <random>
 
-#include "set.h"
+//#include "set.h"
+#include "set_new.h"
 
 using namespace cq;
 using namespace std;
