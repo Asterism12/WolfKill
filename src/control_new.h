@@ -15,6 +15,7 @@
 using namespace cq;
 using namespace std;
 
+
 vector<string> commandAnalyse(string message);
 void groupControl(const GroupMessageEvent &event);
 void privateControl(const PrivateMessageEvent &event);

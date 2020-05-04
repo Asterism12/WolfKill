@@ -96,7 +96,7 @@ public:
                     return;
                 }
                 auto target = &set.players.at(set.seat[NO]);
-                if (target->state == PlayerState::Die) {
+                if ((*target)->state == PlayerState::Die) {
                     set.sendPrivateMessage(playerQQ, "该玩家已死亡，请重新选择目标");
                     return;
                 }
@@ -151,12 +151,12 @@ public:
                 return;
             }
             auto target = &set.players.at(set.seat[NO]);
-            if (target->state == PlayerState::Die) {
+            if ((*target)->state == PlayerState::Die) {
                 set.sendPrivateMessage(playerQQ, "该玩家已死亡，请重新选择目标");
                 return;
             }
             string msg = to_string(NO) + "号玩家的身份为";
-            switch (target->role) {
+            switch ((*target)->role) {
             case PlayerRole::Wolf:
                 msg += "狼人";
                 break;
@@ -232,14 +232,14 @@ public:
                 return;
             }
             auto target = &set.players.at(set.seat[NO]);
-            if (target->state == PlayerState::Die) {
+            if ((*target)->state == PlayerState::Die) {
                 set.sendPrivateMessage(playerQQ, "该玩家已死亡，请重新选择目标");
                 return;
             }
             set.deathNote[set.seat[NO]].insert("witchpoison");
             havePoison = false;
-            if (set.players[set.seat[NO]].role == PlayerRole::Hunter) {
-                set.players[set.seat[NO]].react("", set);
+            if (set.players[set.seat[NO]]->role == PlayerRole::Hunter) {
+                set.players[set.seat[NO]]->react("", set);
             }
             state = PlayerState::Wait;
             set.sendPrivateMessage(playerQQ, "已成功使用毒药，行动结束，请等待白天开始");
@@ -309,7 +309,7 @@ public:
         try {
             int NO = stoi(command[2]);
             if (NO >= 0 && NO < set.players.size()) {
-                if (set.players[set.seat[NO]].state == PlayerState::Die) {
+                if (set.players[set.seat[NO]]->state == PlayerState::Die) {
                     send_group_message(set.group, "该玩家之前已经死亡，请重新选择另一名玩家");
                 } else {
                     set.kill(NO);
@@ -363,7 +363,7 @@ public:
                 return;
             }
             auto target = &set.players.at(set.seat[NO]);
-            if (target->state == PlayerState::Die) {
+            if ((*target)->state == PlayerState::Die) {
                 set.sendPrivateMessage(playerQQ, "该玩家已死亡，请重新选择目标");
                 return;
             }
@@ -418,7 +418,7 @@ public:
                     return;
                 }
                 auto target = &set.players.at(set.seat[NO]);
-                if (target->state == PlayerState::Die) {
+                if ((*target)->state == PlayerState::Die) {
                     set.sendPrivateMessage(playerQQ, "该玩家已死亡，请重新选择目标");
                     return;
                 }
@@ -446,7 +446,7 @@ public:
         try {
             int NO = stoi(command[2]);
             if (NO >= 0 && NO < set.players.size()) {
-                if (set.players[set.seat[NO]].state == PlayerState::Die) {
+                if (set.players[set.seat[NO]]->state == PlayerState::Die) {
                     send_group_message(set.group, "该玩家之前已经死亡，请重新选择另一名玩家");
                 } else {
                     set.kill(NO);

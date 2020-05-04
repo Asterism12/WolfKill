@@ -1,5 +1,5 @@
 #include "control_new.h"
-map<int64_t, GameSet> gamingGroups;
+map<int64_t, GameSet *> gamingGroups;
 
 void groupControl(const GroupMessageEvent &event) {
     bool isGaming = gamingGroups.count(event.group_id);
@@ -14,9 +14,11 @@ void groupControl(const GroupMessageEvent &event) {
         } else {
             //添加一个对局
             GameSet gameset = GameSet();
-            gamingGroups[event.group_id] = gameset;
-            //gamingGroups.insert(pair<int64_t, GameSet>(event.group_id, gameset));
-            gamingGroups[event.group_id].init(command, event);
+            gamingGroups[event.group_id] = &gameset;
+            if (!gamingGroups[event.group_id]->init(command, event)) {
+                //创建失败，直接销毁
+                destorySet(event.group_id);
+            }
         }
     } else if (command[1] == "exit" && isGaming) {
         //移除一个对局
@@ -83,7 +85,7 @@ void groupControl(const GroupMessageEvent &event) {
         }
     } else if (command[1] == "debug") {
         if (isGaming) {
-            gamingGroups[event.group_id].debug = true;
+            gamingGroups[event.group_id]->debug = true;
             string msg = "debug模式开启";
             send_group_message(event.group_id, msg);
         } else {
@@ -91,7 +93,7 @@ void groupControl(const GroupMessageEvent &event) {
             send_group_message(event.group_id, msg);
         }
     } else if (isGaming) {
-        gamingGroups[event.group_id].receiveGroupMessage(event.user_id, command);
+        gamingGroups[event.group_id]->receiveGroupMessage(event.user_id, command);
     }
 }
 
@@ -101,8 +103,8 @@ void privateControl(const PrivateMessageEvent &event) {
         return;
     }
     for (auto it = gamingGroups.begin(); it != gamingGroups.end(); it++) {
-        if (it->second.players.count(event.user_id)) {
-            it->second.receivePrivateMessage(event.user_id, command);
+        if (it->second->players.count(event.user_id)) {
+            it->second->receivePrivateMessage(event.user_id, command);
             break;
         }
     }

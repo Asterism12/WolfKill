@@ -1,8 +1,7 @@
 #include "set_new.h"
 #include "player_new.hpp"
-#include "control_new.h"
 
-void GameSet::init(vector<string> command, GroupMessageEvent event) {
+bool GameSet::init(vector<string> command, GroupMessageEvent event) {
     state = SetState::Setting;
     group = event.group_id;
     botNum = 0;
@@ -17,8 +16,9 @@ void GameSet::init(vector<string> command, GroupMessageEvent event) {
     } else if (command[2] == "5") {
         c5();
     } else {
-        destorySet(group);
+        return false;
     }
+    return true;
 }
 
 void GameSet::c5() {
