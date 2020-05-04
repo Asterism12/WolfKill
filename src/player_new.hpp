@@ -22,15 +22,15 @@ public:
     bool isHost = false;
     int16_t seat;
 
-    void act(vector<string> command, GameSet &set){};//各角色需要在私人聊天中处理的行动
-    void act2(vector<string> command, GameSet &set){}; //特殊角色的行动
-    void react(string msg, GameSet &set){};//角色接受信息，如猎人被毒或告知女巫狼刀信息
-    void me(GameSet &set){}; //自身身份信息
+    virtual void act(vector<string> command, GameSet &set){}; //各角色需要在私人聊天中处理的行动
+    virtual void act2(vector<string> command, GameSet &set){}; //特殊角色的行动
+    virtual void react(string msg, GameSet &set){}; //角色接受信息，如猎人被毒或告知女巫狼刀信息
+    virtual void me(GameSet &set){}; //自身身份信息
 };
 
 class Human : public Player {
 public:
-    void act(vector<string> command, GameSet &set) {
+    virtual void act(vector<string> command, GameSet &set) {
         string failmsg = "验证失败，请检查验证码是否正确，使用.code查看验证码";
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
@@ -56,7 +56,7 @@ public:
         }
     }
 
-    void me(GameSet &set) {
+    virtual void me(GameSet &set) {
         string msg = "你的身份是平民，为减少场外，夜间需要输入验证码，使用.code查看今晚的验证码";
         set.sendPrivateMessage(playerQQ, msg);
     }
@@ -71,7 +71,7 @@ public:
 
 class Wolf : public Player {
 public:
-    void act(vector<string> command, GameSet &set) {
+    virtual void act(vector<string> command, GameSet &set) {
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
         }
@@ -118,7 +118,7 @@ public:
         set.wolfTalk(msg);
     }
 
-    void me(GameSet &set) {
+    virtual void me(GameSet &set) {
         string msg = "你的身份是狼人，请选择今晚的刀口，使用.[-n]刀座位号为n的人，如.1，\n";
         msg += ".100为空刀，\n";
         msg += "在消息前+.可以把信息传给狼队友，如.我倒钩。仅晚上可以使用，\n";
@@ -139,7 +139,7 @@ public:
 
 class Prophet : public Player {
 public:
-    void act(vector<string> command, GameSet &set) {
+    virtual void act(vector<string> command, GameSet &set) {
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
         }
@@ -177,7 +177,7 @@ public:
         }
     }
 
-    void me(GameSet &set) {
+    virtual void me(GameSet &set) {
         string msg = "你的身份是预言家，.[-n]选择今晚的验人，如.1\n";
         set.sendPrivateMessage(playerQQ, msg);
     }
@@ -195,7 +195,7 @@ public:
     bool havePoison = true; //第几天使用了使用毒药，0为没有使用
     int haveAntidote = true; //第几天使用了使用解药，0为没有使用
 
-    void act(vector<string> command, GameSet &set) {
+    virtual void act(vector<string> command, GameSet &set) {
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
         }
@@ -252,13 +252,13 @@ public:
         }
     }
 
-    void react(string msg, GameSet &set) {
+    virtual void react(string msg, GameSet &set) {
         if (haveAntidote) {
             set.sendPrivateMessage(playerQQ, msg);
         }
     }
 
-    void me(GameSet &set) {
+    virtual void me(GameSet &set) {
         string msg = "你的身份是女巫，等待狼人行动，\n";
         msg += ".[-n]向指定目标使用毒药，如.1，如果你还有解药，狼人刀人后会通知你，\n";
         msg += "输入.nop放弃本晚行动。注意，即使你没有任何药，夜晚也需要输入.nop来确认行动结束";
@@ -277,7 +277,7 @@ class Hunter : public Player {
 public:
     bool enableShoot = true;
 
-    void act(vector<string> command, GameSet &set) {
+    virtual void act(vector<string> command, GameSet &set) {
         string failmsg = "验证失败，请检查验证码是否正确，使用.code查看验证码";
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
@@ -303,7 +303,7 @@ public:
         }
     }
 
-    void act2(vector<string> command, GameSet &set) {
+    virtual void act2(vector<string> command, GameSet &set) {
         if (!enableShoot) {
             return;
         }
@@ -326,12 +326,12 @@ public:
         }
     }
 
-    void react(string msg, GameSet &set) {
+    virtual void react(string msg, GameSet &set) {
         enableShoot = false;
         set.sendPrivateMessage(playerQQ, "女巫毒到了你，你死亡后将不能开枪");
     }
 
-    void me(GameSet &set) {
+    virtual void me(GameSet &set) {
         string msg = "你的身份是猎人，女巫对你使用了毒药时会通知你，届时你不能在死亡后开枪\n";
         msg += "为减少场外，夜间狼人行动会向你发送验证码，\n";
         msg += "死亡后在公屏上使用.shoot [-n]指定目标开枪，如.shoot 1";
@@ -350,7 +350,7 @@ class Guard : public Player {
 public:
     int16_t lastTarget = -1;
 
-    void act(vector<string> command, GameSet &set) {
+    virtual void act(vector<string> command, GameSet &set) {
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
         }
@@ -382,7 +382,7 @@ public:
         }
     }
 
-    void me(GameSet &set) {
+    virtual void me(GameSet &set) {
         string msg = "你的身份是守卫，.[-n]守卫指定目标，如.1，\n";
         msg += "注意连续两晚不能守同一人\n";
         set.sendPrivateMessage(playerQQ, msg);
@@ -398,7 +398,7 @@ public:
 
 class WhiteWolf : public Player {
 public:
-    void act(vector<string> command, GameSet &set) {
+    virtual void act(vector<string> command, GameSet &set) {
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
         }
@@ -445,7 +445,7 @@ public:
         set.wolfTalk(msg);
     }
 
-    void act2(vector<string> command, GameSet &set) {
+    virtual void act2(vector<string> command, GameSet &set) {
         if (command.size() != 3) {
             return;
         }
@@ -465,7 +465,7 @@ public:
         }
     }
 
-    void me(GameSet &set) {
+    virtual void me(GameSet &set) {
         string msg = "你的身份是白狼王，请选择今晚的刀口，使用.[-n]刀座位号为n的人，如.1，\n";
         msg += ".100为空刀，\n";
         msg += "在消息前+.可以把信息传给狼队友，如.我倒钩。仅晚上可以使用，\n";
@@ -487,7 +487,7 @@ public:
 
 class Idiot : public Player {
 public:
-    void act(vector<string> command, GameSet &set) {
+    virtual void act(vector<string> command, GameSet &set) {
         string failmsg = "验证失败，请检查验证码是否正确，使用.code查看验证码";
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
@@ -512,6 +512,11 @@ public:
             set.sendPrivateMessage(playerQQ, failmsg);
         }
     }
+    virtual void me(GameSet &set) {
+        string msg = "你的身份是白痴，为减少场外，夜间需要输入验证码，使用.code查看今晚的验证码";
+        set.sendPrivateMessage(playerQQ, msg);
+    }
+
 
     Idiot(int64_t QQ, int16_t seatNumber) {
         state = PlayerState::Ready;

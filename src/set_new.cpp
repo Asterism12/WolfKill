@@ -126,7 +126,6 @@ void GameSet::go() {
     for (int i = 0; i < seat.size(); i++) {
         std::uniform_int_distribution<> dis(0, rolePool.size() - 1);
         int index = dis(gen);
-        //send_group_message(group, to_string(index) + " " + to_string(rolePool.size()));
         switch (rolePool[index]) {
         case PlayerRole::Human:
             players[seat[i]] = new Human(seat[i], i);
@@ -229,26 +228,13 @@ void GameSet::setPlayersState(PlayerState state, PlayerState lastState) {
 
 void GameSet::seatShow() {
     string msg = "座位表：\n";
-    /*
-    msg += to_string(seat.size()) + '\n';
-    for (int i = 0; i < seat.size(); i++) {
-        msg += "[" + to_string(i) + "] " + to_string(seat[i]) + '\n';
-    }
-    */
-    /*
-    for (auto it : players) {
-        msg += to_string(it.second->playerQQ) + '\n';
-    }
-    */
-
     for (int i = 0; i < seat.size(); i++) {
         if (players[seat[i]]->state == PlayerState::Die) {
-            msg += "[" + to_string(i) + "] " + to_string(seat[i]) + '\n';
+            msg += "[" + to_string(i) + "] " + to_string(seat[i]) + "(Die)" + '\n';  
         } else {
-            msg += "[" + to_string(i) + "] " + to_string(seat[i]) + "(Die)" + '\n';
+            msg += "[" + to_string(i) + "] " + to_string(seat[i]) + '\n';
         }
     }
-
     send_group_message(group, msg);
 }
 
