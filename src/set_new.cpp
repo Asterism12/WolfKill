@@ -7,6 +7,7 @@ bool GameSet::init(vector<string> command, GroupMessageEvent event) {
     botNum = 0;
     debug = false;
     date = 0;
+    host = event.user_id;
     if (command[2] == "9") {
         c9();
     } else if (command[2] == "白痴") {
@@ -123,32 +124,33 @@ void GameSet::go() {
     //为人类玩家分配角色
     std::mt19937 gen(rd());
     for (int i = 0; i < seat.size(); i++) {
-        std::uniform_int_distribution<> dis(0, rolePool.size());
+        std::uniform_int_distribution<> dis(0, rolePool.size() - 1);
         int index = dis(gen);
+        //send_group_message(group, to_string(index) + " " + to_string(rolePool.size()));
         switch (rolePool[index]) {
         case PlayerRole::Human:
-            players[seat[i]] = &Human(seat[i], i);
+            players[seat[i]] = new Human(seat[i], i);
             break;
         case PlayerRole::Wolf:
-            players[seat[i]] = &Wolf(seat[i], i);
+            players[seat[i]] = new Wolf(seat[i], i);
             break;
         case PlayerRole::Prophet:
-            players[seat[i]] = &Prophet(seat[i], i);
+            players[seat[i]] = new Prophet(seat[i], i);
             break;
         case PlayerRole::Witch:
-            players[seat[i]] = &Witch(seat[i], i);
+            players[seat[i]] = new Witch(seat[i], i);
             break;
         case PlayerRole::Hunter:
-            players[seat[i]] = &Hunter(seat[i], i);
+            players[seat[i]] = new Hunter(seat[i], i);
             break;
         case PlayerRole::Idiot:
-            players[seat[i]] = &Idiot(seat[i], i);
+            players[seat[i]] = new Idiot(seat[i], i);
             break;
         case PlayerRole::Guard:
-            players[seat[i]] = &Guard(seat[i], i);
+            players[seat[i]] = new Guard(seat[i], i);
             break;
         case PlayerRole::WhiteWolf:
-            players[seat[i]] = &Human(seat[i], i);
+            players[seat[i]] = new Human(seat[i], i);
             break;
         default:
             break;
@@ -227,6 +229,18 @@ void GameSet::setPlayersState(PlayerState state, PlayerState lastState) {
 
 void GameSet::seatShow() {
     string msg = "座位表：\n";
+    /*
+    msg += to_string(seat.size()) + '\n';
+    for (int i = 0; i < seat.size(); i++) {
+        msg += "[" + to_string(i) + "] " + to_string(seat[i]) + '\n';
+    }
+    */
+    /*
+    for (auto it : players) {
+        msg += to_string(it.second->playerQQ) + '\n';
+    }
+    */
+
     for (int i = 0; i < seat.size(); i++) {
         if (players[seat[i]]->state == PlayerState::Die) {
             msg += "[" + to_string(i) + "] " + to_string(seat[i]) + '\n';
@@ -234,6 +248,7 @@ void GameSet::seatShow() {
             msg += "[" + to_string(i) + "] " + to_string(seat[i]) + "(Die)" + '\n';
         }
     }
+
     send_group_message(group, msg);
 }
 
@@ -265,12 +280,14 @@ void GameSet::receiveGroupMessage(int64_t QQ, vector<string> command) {
         try {
             QQ = stoi(command[1]);
             command.erase(command.begin() + 1);
+            send_group_message(group, to_string(QQ));
         } catch (invalid_argument) {
             return;
         } catch (out_of_range) {
             return;
         }
     }
+
     if (players.count(QQ) == 0 && state != SetState::Waiting) {
         return;
     }
@@ -278,6 +295,7 @@ void GameSet::receiveGroupMessage(int64_t QQ, vector<string> command) {
     if (command.size() <= 1) {
         return;
     }
+
 
     if (command[1] == "join" && state == SetState::Waiting) {
         addPlayer(QQ);
@@ -317,12 +335,12 @@ void GameSet::receiveGroupMessage(int64_t QQ, vector<string> command) {
                 return;
             }
         }
-    } else if (command[1] == ".shoot" && state == SetState::Night) {
+    } else if (command[1] == "shoot" && state == SetState::Night) {
         //猎人开枪
         if (players[QQ]->role == PlayerRole::Hunter && players[QQ]->state == PlayerState::Die) {
             players[QQ]->act2(command, *this);
         }
-    } else if (command[1] == ".boom" && state == SetState::Day) {
+    } else if (command[1] == "boom" && state == SetState::Day) {
         //白狼自爆
         if (players[QQ]->role == PlayerRole::WhiteWolf && players[QQ]->state == PlayerState::Day) {
             players[QQ]->act2(command, *this);

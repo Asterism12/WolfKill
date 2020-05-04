@@ -1,5 +1,42 @@
 #include "control_new.h"
-map<int64_t, GameSet *> gamingGroups;
+map<int64_t, GameSet> gamingGroups;
+
+vector<string> commandAnalyse(string message) {
+    vector<string> res = {"."};
+    vector<string> empty = {"!"};
+
+    if (message.size() <= 1 || message[0] != '.') {
+        return empty;
+    }
+
+    int start = 1;
+    bool inString = true;
+    for (int i = 1; i <= message.size(); i++) {
+        if (inString) {
+            if (message[i] == ' ' || message[i] == '\n' || message[i] == '\0') {
+                if (start == i) {
+                    return empty;
+                } else {
+                    inString = false;
+                    res.push_back(message.substr(start, i - start));
+                }
+            }
+        } else {
+            if (message[i] == ' ' || message[i] == '\n' || message[i] == '\0') {
+                continue;
+            } else {
+                inString = true;
+                start = i;
+            }
+        }
+    }
+
+    return res;
+}
+
+void destorySet(int64_t set) {
+    gamingGroups.erase(set);
+}
 
 void groupControl(const GroupMessageEvent &event) {
     bool isGaming = gamingGroups.count(event.group_id);
@@ -13,9 +50,7 @@ void groupControl(const GroupMessageEvent &event) {
             send_group_message(event.group_id, msg);
         } else {
             //添加一个对局
-            GameSet gameset = GameSet();
-            gamingGroups[event.group_id] = &gameset;
-            if (!gamingGroups[event.group_id]->init(command, event)) {
+            if (!gamingGroups[event.group_id].init(command, event)) {
                 //创建失败，直接销毁
                 destorySet(event.group_id);
             }
@@ -85,7 +120,7 @@ void groupControl(const GroupMessageEvent &event) {
         }
     } else if (command[1] == "debug") {
         if (isGaming) {
-            gamingGroups[event.group_id]->debug = true;
+            gamingGroups[event.group_id].debug = true;
             string msg = "debug模式开启";
             send_group_message(event.group_id, msg);
         } else {
@@ -93,7 +128,7 @@ void groupControl(const GroupMessageEvent &event) {
             send_group_message(event.group_id, msg);
         }
     } else if (isGaming) {
-        gamingGroups[event.group_id]->receiveGroupMessage(event.user_id, command);
+        gamingGroups[event.group_id].receiveGroupMessage(event.user_id, command);
     }
 }
 
@@ -103,46 +138,9 @@ void privateControl(const PrivateMessageEvent &event) {
         return;
     }
     for (auto it = gamingGroups.begin(); it != gamingGroups.end(); it++) {
-        if (it->second->players.count(event.user_id)) {
-            it->second->receivePrivateMessage(event.user_id, command);
+        if (it->second.players.count(event.user_id)) {
+            it->second.receivePrivateMessage(event.user_id, command);
             break;
         }
     }
-}
-
-vector<string> commandAnalyse(string message) {
-    vector<string> res = {"."};
-    vector<string> empty = {"!"};
-
-    if (message.size() <= 1 || message[0] != '.') {
-        return empty;
-    }
-
-    int start = 1;
-    bool inString = true;
-    for (int i = 1; i <= message.size(); i++) {
-        if (inString) {
-            if (message[i] == ' ' || message[i] == '\n' || message[i] == '\0') {
-                if (start == i) {
-                    return empty;
-                } else {
-                    inString = false;
-                    res.push_back(message.substr(start, i - start));
-                }
-            }
-        } else {
-            if (message[i] == ' ' || message[i] == '\n' || message[i] == '\0') {
-                continue;
-            } else {
-                inString = true;
-                start = i;
-            }
-        }
-    }
-
-    return res;
-}
-
-void destorySet(int64_t set) {
-    gamingGroups.erase(set);
 }

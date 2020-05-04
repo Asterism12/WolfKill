@@ -62,6 +62,7 @@ public:
     }
 
     Human(int64_t QQ, int16_t seatNumber) {
+        state = PlayerState::Ready;
         role = PlayerRole::Human;
         playerQQ = QQ;
         seat = seatNumber;
@@ -129,6 +130,7 @@ public:
     }
 
     Wolf(int64_t QQ, int16_t seatNumber) {
+        state = PlayerState::Ready;
         role = PlayerRole::Wolf;
         playerQQ = QQ;
         seat = seatNumber;
@@ -181,6 +183,7 @@ public:
     }
 
     Prophet(int64_t QQ, int16_t seatNumber) {
+        state = PlayerState::Ready;
         role = PlayerRole::Prophet;
         playerQQ = QQ;
         seat = seatNumber;
@@ -263,6 +266,7 @@ public:
     }
 
     Witch(int64_t QQ, int16_t seatNumber) {
+        state = PlayerState::Ready;
         role = PlayerRole::Witch;
         playerQQ = QQ;
         seat = seatNumber;
@@ -335,6 +339,7 @@ public:
     }
 
     Hunter(int64_t QQ, int16_t seatNumber) {
+        state = PlayerState::Ready;
         role = PlayerRole::Hunter;
         playerQQ = QQ;
         seat = seatNumber;
@@ -384,6 +389,7 @@ public:
     }
 
     Guard(int64_t QQ, int16_t seatNumber) {
+        state = PlayerState::Ready;
         role = PlayerRole::Guard;
         playerQQ = QQ;
         seat = seatNumber;
@@ -472,6 +478,7 @@ public:
     }
 
     WhiteWolf(int64_t QQ, int16_t seatNumber) {
+        state = PlayerState::Ready;
         role = PlayerRole::WhiteWolf;
         playerQQ = QQ;
         seat = seatNumber;
@@ -507,6 +514,7 @@ public:
     }
 
     Idiot(int64_t QQ, int16_t seatNumber) {
+        state = PlayerState::Ready;
         role = PlayerRole::Idiot;
         playerQQ = QQ;
         seat = seatNumber;

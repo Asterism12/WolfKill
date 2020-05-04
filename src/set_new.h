@@ -24,6 +24,7 @@ public:
     int16_t code; //闭眼玩家的验证码，用于减少场外因素
     vector<int64_t> seat; //玩家列表，数组下标对应座位号
     map<int64_t, Player*> players;
+    map<int, int> kes;
     vector<PlayerRole> rolePool;
     int16_t date;
     map<int64_t, set<string>> deathNote; //每晚玩家与死亡有关的行动列表，<死亡玩家，行动列表>
