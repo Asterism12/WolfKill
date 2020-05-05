@@ -37,7 +37,7 @@ void GameSet::c6() {
 
     addPlayer(host);
 
-    string msg = "本局为预猎6人测试局，玩家输入.join加入游戏";
+    string msg = "本局为预猎6人测试局，玩家输入.join加入游戏，房间满人后房主使用.go命令开始游戏";
     send_group_message(group, msg);
 }
 
@@ -57,7 +57,7 @@ void GameSet::c9() {
 
     addPlayer(host);
 
-    string msg = "本局为预女猎9人局，玩家输入.join加入游戏";
+    string msg = "本局为预女猎9人局，玩家输入.join加入游戏，房间满人后房主使用.go命令开始游戏";
     send_group_message(group, msg);
 }
 
@@ -78,7 +78,7 @@ void GameSet::cIdiot() {
 
     addPlayer(host);
 
-    string msg = "本局为预女猎白12人局，玩家输入.join加入游戏";
+    string msg = "本局为预女猎白12人局，玩家输入.join加入游戏,房间满人后房主使用.go命令开始游戏";
     send_group_message(group, msg);
 }
 
@@ -97,7 +97,7 @@ void GameSet::cWhite() {
 
     addPlayer(host);
 
-    string msg = "本局为预女猎守白狼王12人局，玩家输入.join加入游戏";
+    string msg = "本局为预女猎守白狼王12人局，玩家输入.join加入游戏,房间满人后房主使用.go命令开始游戏";
     send_group_message(group, msg);
 }
 
