@@ -80,7 +80,7 @@ void groupControl(const GroupMessageEvent &event) {
         send_group_message(event.group_id, msg);
     } else if (command[1] == "rd") {
         int begin = 1;
-        if (rdBeginZero.at(event.group_id) && rdBeginZero[event.group_id]) {
+        if (rdBeginZero.count(event.group_id) == 1 && rdBeginZero[event.group_id]) {
             begin = 0;
         }
         int r = 1;
