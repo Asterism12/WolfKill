@@ -35,11 +35,8 @@ public:
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
         }
-        if (command.size() >= 2) {
+        if (command.size() > 2) {
             return;
-        }
-        if (command[1] == "code") {
-            set.sendPrivateMessage(playerQQ, "当前验证码为" + to_string(set.code));
         }
         try {
             int code = stoi(command[1]);
@@ -79,7 +76,13 @@ public:
         if (command[1] == "target") {
             msg = "当前狼团队中各玩家目标为：";
             for (auto p : set.wolfs) {
-                msg += "\n" + to_string(p.first) + "号玩家想要刀" + to_string(p.second) + "号玩家";
+                if (p.second == -1) {
+                    msg += "\n" + to_string(p.first) + "号玩家还没有指定自己的目标";
+                } else if (p.second == 100) {
+                    msg += "\n" + to_string(p.first) + "号玩家想要空刀";
+                } else {
+                    msg += "\n" + to_string(p.first) + "号玩家想要刀" + to_string(p.second) + "号玩家";
+                }
             }
             set.sendPrivateMessage(playerQQ, msg);
             return;
@@ -122,6 +125,7 @@ public:
         string msg = "你的身份是狼人，请选择今晚的刀口，使用.[-n]刀座位号为n的人，如.1，\n";
         msg += ".100为空刀，\n";
         msg += "在消息前+.可以把信息传给狼队友，如.我倒钩。仅晚上可以使用，\n";
+        msg += "使用.target查看当前狼团队的狼刀情况\n";
         msg += "狼团队:";
         for (auto wolf = set.wolfs.begin(); wolf != set.wolfs.end(); wolf++) {
             msg += to_string(wolf->first) + ",";
@@ -143,7 +147,7 @@ public:
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
         }
-        if (command.size() >= 2) {
+        if (command.size() > 2) {
             return;
         }
         try {
@@ -199,7 +203,7 @@ public:
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
         }
-        if (command.size() >= 2) {
+        if (command.size() > 2) {
             return;
         }
         if (command[1] == "nop") {
@@ -282,11 +286,8 @@ public:
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
         }
-        if (command.size() >= 2) {
+        if (command.size() > 2) {
             return;
-        }
-        if (command[1] == "code") {
-            set.sendPrivateMessage(playerQQ, "当前验证码为" + to_string(set.code));
         }
         try {
             int code = stoi(command[1]);
@@ -406,7 +407,13 @@ public:
         if (command[1] == "target") {
             msg = "当前狼团队中各玩家目标为：";
             for (auto p : set.wolfs) {
-                msg += "\n" + to_string(p.first) + "号玩家想要刀" + to_string(p.second) + "号玩家";
+                if (p.second == -1) {
+                    msg += "\n" + to_string(p.first) + "号玩家还没有指定自己的目标";
+                } else if (p.second == 100) {
+                    msg += "\n" + to_string(p.first) + "号玩家想要空刀";
+                } else  {
+                    msg += "\n" + to_string(p.first) + "号玩家想要刀" + to_string(p.second) + "号玩家";
+                }
             }
             set.sendPrivateMessage(playerQQ, msg);
             return;
@@ -469,6 +476,7 @@ public:
         string msg = "你的身份是白狼王，请选择今晚的刀口，使用.[-n]刀座位号为n的人，如.1，\n";
         msg += ".100为空刀，\n";
         msg += "在消息前+.可以把信息传给狼队友，如.我倒钩。仅晚上可以使用，\n";
+        msg += "使用.target查看当前狼团队的狼刀情况\n";
         msg += "狼团队:";
         for (auto wolf = set.wolfs.begin(); wolf != set.wolfs.end(); wolf++) {
             msg += to_string(wolf->first) + ",";
@@ -492,11 +500,8 @@ public:
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
         }
-        if (command.size() >= 2) {
+        if (command.size() > 2) {
             return;
-        }
-        if (command[1] == "code") {
-            set.sendPrivateMessage(playerQQ, "当前验证码为" + to_string(set.code));
         }
         try {
             int code = stoi(command[1]);

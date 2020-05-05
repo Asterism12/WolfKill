@@ -132,6 +132,7 @@ void GameSet::go() {
             break;
         case PlayerRole::Wolf:
             players[seat[i]] = new Wolf(seat[i], i);
+            wolfs[i] = -1;
             break;
         case PlayerRole::Prophet:
             players[seat[i]] = new Prophet(seat[i], i);
@@ -150,6 +151,7 @@ void GameSet::go() {
             break;
         case PlayerRole::WhiteWolf:
             players[seat[i]] = new Human(seat[i], i);
+            wolfs[i] = -1;
             break;
         default:
             break;
@@ -230,7 +232,7 @@ void GameSet::seatShow() {
     string msg = "座位表：\n";
     for (int i = 0; i < seat.size(); i++) {
         if (players[seat[i]]->state == PlayerState::Die) {
-            msg += "[" + to_string(i) + "] " + to_string(seat[i]) + "(Die)" + '\n';  
+            msg += "[" + to_string(i) + "] " + to_string(seat[i]) + "(Die)" + '\n';
         } else {
             msg += "[" + to_string(i) + "] " + to_string(seat[i]) + '\n';
         }
@@ -263,14 +265,18 @@ void GameSet::receiveGroupMessage(int64_t QQ, vector<string> command) {
         if (command.size() <= 2) {
             return;
         }
-        try {
-            QQ = stoi(command[1]);
+        if (command[1] == "host") {
+            QQ = host;
             command.erase(command.begin() + 1);
-            send_group_message(group, to_string(QQ));
-        } catch (invalid_argument) {
-            return;
-        } catch (out_of_range) {
-            return;
+        } else {
+            try {
+                QQ = stoi(command[1]);
+                command.erase(command.begin() + 1);
+            } catch (invalid_argument) {
+                return;
+            } catch (out_of_range) {
+                return;
+            }
         }
     }
 
@@ -281,7 +287,6 @@ void GameSet::receiveGroupMessage(int64_t QQ, vector<string> command) {
     if (command.size() <= 1) {
         return;
     }
-
 
     if (command[1] == "join" && state == SetState::Waiting) {
         addPlayer(QQ);
@@ -340,13 +345,18 @@ void GameSet::receivePrivateMessage(int64_t QQ, vector<string> command) {
         if (command.size() <= 2) {
             return;
         }
-        try {
-            QQ = stoi(command[1]);
+        if (command[1] == "host") {
+            QQ = host;
             command.erase(command.begin() + 1);
-        } catch (invalid_argument) {
-            return;
-        } catch (out_of_range) {
-            return;
+        } else {
+            try {
+                QQ = stoi(command[1]);
+                command.erase(command.begin() + 1);
+            } catch (invalid_argument) {
+                return;
+            } catch (out_of_range) {
+                return;
+            }
         }
     }
     if (players.count(QQ) == 0) {
@@ -386,7 +396,13 @@ void GameSet::wolfKillCheck() {
         int16_t target = wolfs.begin()->second;
         if (target == 100) {
             for (auto pl = players.begin(); pl != players.end(); pl++) {
-                if (pl->second->role == PlayerRole::Witch && pl->second->state != PlayerState::Die) {
+                if (pl->second->state == PlayerState::Die) {
+                    continue;
+                }
+                if (pl->second->role == PlayerRole::Wolf || pl->second->role == PlayerRole::WhiteWolf) {
+                    sendPrivateMessage(pl->second->playerQQ, "今晚锁定狼刀为：空刀，行动结束，请等待白天开始");
+                }
+                if (pl->second->role == PlayerRole::Witch) {
                     pl->second->react("今晚狼人空刀使用.nop结束行动或可以使用毒药", *this);
                     break;
                 }
@@ -394,14 +410,21 @@ void GameSet::wolfKillCheck() {
         } else {
             deathNote[seat[target]].insert("wolfkill");
             for (auto pl = players.begin(); pl != players.end(); pl++) {
-                if (pl->second->role == PlayerRole::Witch && pl->second->state != PlayerState::Die) {
+                if (pl->second->state == PlayerState::Die) {
+                    continue;
+                }
+                if (pl->second->role == PlayerRole::Wolf || pl->second->role == PlayerRole::WhiteWolf) {
+                    sendPrivateMessage(pl->second->playerQQ,
+                                       "今晚锁定狼刀为：" + to_string(target) + "号玩家，行动结束，请等待白天开始");
+                }
+                if (pl->second->role == PlayerRole::Witch) {
                     pl->second->react("今晚" + to_string(target) + "号玩家中刀，可以使用.save命令使用解药", *this);
                     break;
                 }
             }
         }
         for (auto wolf = wolfs.begin(); wolf != wolfs.end(); wolf++) {
-            players[wolf->first]->state = PlayerState::Wait;
+            players[seat[wolf->first]]->state = PlayerState::Wait;
         }
         daybreakCheck();
     }
@@ -411,7 +434,8 @@ void GameSet::kill(int16_t seatNumber) {
     players[seat[seatNumber]]->state = PlayerState::Die;
     send_group_message(group, to_string(seatNumber) + "号玩家死亡");
 
-    if (players[seat[seatNumber]]->role == PlayerRole::Wolf || players[seat[seatNumber]]->role == PlayerRole::WhiteWolf) {
+    if (players[seat[seatNumber]]->role == PlayerRole::Wolf
+        || players[seat[seatNumber]]->role == PlayerRole::WhiteWolf) {
         wolfs.erase(seatNumber);
         wolfNum--;
     } else if (players[seat[seatNumber]]->role == PlayerRole::Human) {
@@ -427,8 +451,7 @@ void GameSet::winCheck() {
     if (humanNum == 0 || godNum == 0) {
         send_group_message(group, "游戏结束，狼人胜利\n");
         analyse();
-    }
-    else if (wolfNum == 0) {
+    } else if (wolfNum == 0) {
         send_group_message(group, "游戏结束，好人胜利\n");
         analyse();
     }
@@ -441,31 +464,31 @@ void GameSet::analyse() {
 
 void GameSet::roleMessage() {
     string msg = "身份表：\n";
-    for (int i = 0; i < players.size(); i++) {
-        switch (players[i]->role) {
+    for (auto player : players) {
+        switch (player.second->role) {
         case PlayerRole::Human:
-            msg += "[" + to_string(i) + "] 平民" + '\n';
+            msg += "[" + to_string(player.second->seat) + "] 平民" + '\n';
             break;
         case PlayerRole::Hunter:
-            msg += "[" + to_string(i) + "] 猎人" + '\n';
+            msg += "[" + to_string(player.second->seat) + "] 猎人" + '\n';
             break;
         case PlayerRole::Prophet:
-            msg += "[" + to_string(i) + "] 预言家" + '\n';
+            msg += "[" + to_string(player.second->seat) + "] 预言家" + '\n';
             break;
         case PlayerRole::Witch:
-            msg += "[" + to_string(i) + "] 女巫" + '\n';
+            msg += "[" + to_string(player.second->seat) + "] 女巫" + '\n';
             break;
         case PlayerRole::Wolf:
-            msg += "[" + to_string(i) + "] 狼人" + '\n';
+            msg += "[" + to_string(player.second->seat) + "] 狼人" + '\n';
             break;
         case PlayerRole::Idiot:
-            msg += "[" + to_string(i) + "] 白痴" + '\n';
+            msg += "[" + to_string(player.second->seat) + "] 白痴" + '\n';
             break;
         case PlayerRole::WhiteWolf:
-            msg += "[" + to_string(i) + "] 白狼王" + '\n';
+            msg += "[" + to_string(player.second->seat) + "] 白狼王" + '\n';
             break;
         case PlayerRole::Guard:
-            msg += "[" + to_string(i) + "] 守卫" + '\n';
+            msg += "[" + to_string(player.second->seat) + "] 守卫" + '\n';
             break;
         default:
             break;
