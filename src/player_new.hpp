@@ -231,7 +231,7 @@ public:
         }
         try {
             int NO = stoi(command[1]);
-            if (!haveAntidote) {
+            if (!havePoison) {
                 set.sendPrivateMessage(playerQQ, "你已经没有毒药了");
                 return;
             }
@@ -356,7 +356,7 @@ public:
         if (set.state != SetState::Night || this->state != PlayerState::Action) {
             return;
         }
-        if (command.size() >= 2) {
+        if (command.size() > 2) {
             return;
         }
         try {
@@ -464,7 +464,7 @@ public:
                 if (set.players[set.seat[NO]]->state == PlayerState::Die) {
                     send_group_message(set.group, "该玩家之前已经死亡，请重新选择另一名玩家");
                 } else {
-                    set.kill(playerQQ);
+                    set.kill(seat);
                     set.kill(NO);
                 }
             }

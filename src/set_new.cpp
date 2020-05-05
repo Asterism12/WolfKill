@@ -26,12 +26,12 @@ void GameSet::c5() {
     state = SetState::Waiting;
     rolePool.push_back(PlayerRole::Human);
     rolePool.push_back(PlayerRole::Wolf);
-    rolePool.push_back(PlayerRole::WhiteWolf);
-    rolePool.push_back(PlayerRole::Prophet);
+    rolePool.push_back(PlayerRole::Guard);
+    rolePool.push_back(PlayerRole::Witch);
 
     humanNum = 1;
-    wolfNum = 2;
-    godNum = 1;
+    wolfNum = 1;
+    godNum = 2;
 
     addPlayer(host);
 
@@ -173,6 +173,7 @@ void GameSet::night() {
     if (state == SetState::Analysing) {
         return;
     }
+    deathNote.clear();
     date++;
     state = SetState::Night;
     send_group_message(group, "进入第" + to_string(date) + "天黑夜，在私聊中使用.me查看自己的身份信息和提示");
@@ -193,10 +194,10 @@ void GameSet::morning() {
 }
 
 void GameSet::day() {
+    handleDeathEvent();
     if (state == SetState::Analysing) {
         return;
     }
-    handleDeathEvent();
     state = SetState::Day;
     setPlayersState(PlayerState::Day, PlayerState::Wait);
     send_group_message(
@@ -204,6 +205,7 @@ void GameSet::day() {
 }
 
 void GameSet::handleDeathEvent() {
+    int deathNum = 0;
     for (auto death = deathNote.begin(); death != deathNote.end(); death++) {
         int vote = 0; //狼刀-1，毒-2，女巫救+1，守卫守+1，得分不为0判定为死亡
         for (auto reason = death->second.begin(); reason != death->second.end(); reason++) {
@@ -228,8 +230,13 @@ void GameSet::handleDeathEvent() {
         if (vote != 0) {
             kill(players[death->first]->seat);
             deathNote.erase(death);
+            deathNum++;
         }
     }
+    if (deathNum == 0) {
+        send_group_message(group, "昨天晚上是平安夜，无人死亡");
+    }
+    
 }
 
 void GameSet::setPlayersState(PlayerState state, PlayerState lastState) {
