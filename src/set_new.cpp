@@ -14,28 +14,30 @@ bool GameSet::init(vector<string> command, GroupMessageEvent event) {
         cIdiot();
     } else if (command[2] == "白狼王") {
         cWhite();
-    } else if (command[2] == "5") {
-        c5();
+    } else if (command[2] == "6") {
+        c6();
     } else {
         return false;
     }
     return true;
 }
 
-void GameSet::c5() {
+void GameSet::c6() {
     state = SetState::Waiting;
     rolePool.push_back(PlayerRole::Human);
+    rolePool.push_back(PlayerRole::Human);
     rolePool.push_back(PlayerRole::Wolf);
+    rolePool.push_back(PlayerRole::Wolf);
+    rolePool.push_back(PlayerRole::Prophet);
     rolePool.push_back(PlayerRole::Guard);
-    rolePool.push_back(PlayerRole::Witch);
 
-    humanNum = 1;
-    wolfNum = 1;
+    humanNum = 2;
+    wolfNum = 2;
     godNum = 2;
 
     addPlayer(host);
 
-    string msg = "本局为人狼白3人测试局，玩家输入.join加入游戏";
+    string msg = "本局为预猎6人测试局，玩家输入.join加入游戏";
     send_group_message(group, msg);
 }
 
@@ -345,7 +347,7 @@ void GameSet::receiveGroupMessage(int64_t QQ, vector<string> command) {
                 return;
             }
         }
-    } else if (command[1] == "shoot" && state == SetState::Night) {
+    } else if (command[1] == "shoot") {
         //猎人开枪
         if (players[QQ]->role == PlayerRole::Hunter && players[QQ]->state == PlayerState::Die) {
             players[QQ]->act2(command, *this);

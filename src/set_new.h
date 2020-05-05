@@ -34,7 +34,7 @@ public:
     bool debug; //是否开启debug模式
 
     bool init(vector<string> command, GroupMessageEvent event);
-    void c5();
+    void c6();
     void c9();
     void cIdiot();
     void cWhite();

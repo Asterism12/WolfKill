@@ -1,5 +1,6 @@
 #include "control_new.h"
 map<int64_t, GameSet> gamingGroups;
+map<int64_t, bool> rdBeginZero;//true投骰子从0开始，false从1开始
 
 vector<string> commandAnalyse(string message) {
     vector<string> res = {"."};
@@ -58,10 +59,30 @@ void groupControl(const GroupMessageEvent &event) {
     } else if (command[1] == "exit" && isGaming) {
         //移除一个对局
         gamingGroups.erase(event.group_id);
-
         string msg = "已强制退出游戏模式";
         send_group_message(event.group_id, msg);
+    } else if (command[1] == "begin0") {
+        rdBeginZero[event.group_id] = true;
+        send_group_message(event.group_id, "当前rd命令投骰子点数从0开始");
+    } else if (command[1] == "begin1") {
+        rdBeginZero[event.group_id] = false;
+        send_group_message(event.group_id, "当前rd命令投骰子点数从1开始");
+    } else if (command[1] == "help") {
+        string msg = "使用.rd [骰子数量] [上界] 命令投骰子\n";
+        msg += "使用.begin0命令使骰子下界为0\n";
+        msg += "使用.begin1命令使骰子下界为1\n";
+        msg += "使用.start [板子代码]命令开始一局狼人杀游戏\n";
+        msg += "当前有的板子类别及对应代码为：\n";
+        msg += "2民2狼预守(6人) 代码：'6'\n";
+        msg += "3民3狼预女猎(9人) 代码：'9'\n";
+        msg += "4民4狼预女猎白痴(12人) 代码：'白痴'\n";
+        msg += "4民3狼白狼王预女猎守(12人) 代码：'白狼王'";
+        send_group_message(event.group_id, msg);
     } else if (command[1] == "rd") {
+        int begin = 1;
+        if (rdBeginZero.at(event.group_id) && rdBeginZero[event.group_id]) {
+            begin = 0;
+        }
         int r = 1;
         int d = 100;
         try {
@@ -76,12 +97,12 @@ void groupControl(const GroupMessageEvent &event) {
                 d = stoi(command[3]);
                 break;
             default:
-                string err1 = "格式错误，rd，rd [-range]，rd [-dicenumber] [-range]";
+                string err1 = "格式错误，rd，rd [上界]，rd [骰子数量] [上界]";
                 send_group_message(event.group_id, err1);
                 return;
             }
         } catch (invalid_argument) {
-            string err1 = "格式错误，rd，rd [-range]，rd [-dicenumber] [-range]";
+            string err1 = "格式错误，rd，rd [上界]，rd [骰子数量] [上界]";
             send_group_message(event.group_id, err1);
             return;
         } catch (out_of_range) {
@@ -101,7 +122,7 @@ void groupControl(const GroupMessageEvent &event) {
         }
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<int> dist(0, d);
+        std::uniform_int_distribution<int> dist(begin, d);
         if (r == 1) {
             int res = dist(gen);
             string msg = "rd:";

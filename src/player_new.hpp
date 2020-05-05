@@ -219,6 +219,10 @@ public:
             }
             for (auto death = set.deathNote.begin(); death != set.deathNote.end(); death++) {
                 if (death->second.count("wolfkill") != 0) {
+                    if (death->first == playerQQ && set.date > 1) {
+                        set.sendPrivateMessage(playerQQ, "从第二晚开始，女巫不能自救");
+                        return;
+                    }
                     death->second.insert("witchsave");
                     haveAntidote = false;
                     state = PlayerState::Wait;
