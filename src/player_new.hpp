@@ -94,6 +94,7 @@ public:
                     set.wolfs.at(seat) = NO; //设置狼刀
                     set.wolfTalk(to_string(seat) + "号玩家想要空刀");
                     set.wolfKillCheck();
+                    return;
                 }
                 if (NO < 0 || NO >= set.seat.size()) {
                     set.sendPrivateMessage(playerQQ, "你选择的座位号超出范围");
@@ -425,6 +426,7 @@ public:
                     set.wolfs.at(seat) = NO; //设置狼刀
                     set.wolfTalk(to_string(seat) + "号玩家想要空刀");
                     set.wolfKillCheck();
+                    return;
                 }
                 if (NO < 0 || NO >= set.seat.size()) {
                     set.sendPrivateMessage(playerQQ, "你选择的座位号超出范围");
@@ -462,6 +464,7 @@ public:
                 if (set.players[set.seat[NO]]->state == PlayerState::Die) {
                     send_group_message(set.group, "该玩家之前已经死亡，请重新选择另一名玩家");
                 } else {
+                    set.kill(playerQQ);
                     set.kill(NO);
                 }
             }
