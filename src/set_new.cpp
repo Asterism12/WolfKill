@@ -251,11 +251,17 @@ void GameSet::setPlayersState(PlayerState state, PlayerState lastState) {
 
 void GameSet::seatShow() {
     string msg = "座位表：\n";
-    for (int i = 0; i < seat.size(); i++) {
-        if (players[seat[i]]->state == PlayerState::Die) {
-            msg += "[" + to_string(i) + "] " + to_string(seat[i]) + "(Die)" + '\n';
-        } else {
-            msg += "[" + to_string(i) + "] " + to_string(seat[i]) + '\n';
+    if (state == SetState::Waiting) {
+        for (int i = 0; i < seat.size(); i++) {
+                msg += "[" + to_string(i) + "] " + to_string(seat[i]) + '\n'; 
+        }
+    } else {
+        for (int i = 0; i < seat.size(); i++) {
+            if (players[seat[i]]->state == PlayerState::Die) {
+                msg += "[" + to_string(i) + "] " + to_string(seat[i]) + "(Die)" + '\n';
+            } else {
+                msg += "[" + to_string(i) + "] " + to_string(seat[i]) + '\n';
+            }
         }
     }
     send_group_message(group, msg);
