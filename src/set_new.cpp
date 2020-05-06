@@ -37,7 +37,7 @@ void GameSet::c6() {
 
     addPlayer(host);
 
-    string msg = "本局为预猎6人测试局，玩家输入.join加入游戏，房间满人后房主使用.go命令开始游戏";
+    string msg = "本局为预守6人测试局，玩家输入.join加入游戏，房间满人后房主使用.go命令开始游戏";
     send_group_message(group, msg);
 }
 
