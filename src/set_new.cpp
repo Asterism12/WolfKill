@@ -286,11 +286,11 @@ void GameSet::sendPrivateMessage(int64_t QQ, string msg) {
     }
 }
 
-void GameSet::receiveGroupMessage(int64_t QQ, vector<string> command) {
+bool GameSet::receiveGroupMessage(int64_t QQ, vector<string> command) {
     if (debug) {
         // debug模式，第二个参数为模拟发送者的QQ号
         if (command.size() <= 2) {
-            return;
+            return false;
         }
         if (command[1] == "host") {
             QQ = host;
@@ -300,19 +300,19 @@ void GameSet::receiveGroupMessage(int64_t QQ, vector<string> command) {
                 QQ = stoi(command[1]);
                 command.erase(command.begin() + 1);
             } catch (invalid_argument) {
-                return;
+                return true;
             } catch (out_of_range) {
-                return;
+                return true;
             }
         }
     }
 
     if (players.count(QQ) == 0 && state != SetState::Waiting) {
-        return;
+        return false;
     }
 
     if (command.size() <= 1) {
-        return;
+        return false;
     }
 
     if (command[1] == "join" && state == SetState::Waiting) {
@@ -348,9 +348,9 @@ void GameSet::receiveGroupMessage(int64_t QQ, vector<string> command) {
                     }
                 }
             } catch (invalid_argument) {
-                return;
+                return true;
             } catch (out_of_range) {
-                return;
+                return true;
             }
         }
     } else if (command[1] == "shoot") {
@@ -363,14 +363,17 @@ void GameSet::receiveGroupMessage(int64_t QQ, vector<string> command) {
         if (players[QQ]->role == PlayerRole::WhiteWolf && players[QQ]->state == PlayerState::Day) {
             players[QQ]->act2(command, *this);
         }
+    } else {
+        return false;
     }
+    return true;
 }
 
-void GameSet::receivePrivateMessage(int64_t QQ, vector<string> command) {
+bool GameSet::receivePrivateMessage(int64_t QQ, vector<string> command) {
     if (debug) {
         // debug模式，第二个参数为模拟发送者的QQ号
         if (command.size() <= 2) {
-            return;
+            return false;
         }
         if (command[1] == "host") {
             QQ = host;
@@ -380,18 +383,18 @@ void GameSet::receivePrivateMessage(int64_t QQ, vector<string> command) {
                 QQ = stoi(command[1]);
                 command.erase(command.begin() + 1);
             } catch (invalid_argument) {
-                return;
+                return true;
             } catch (out_of_range) {
-                return;
+                return true;
             }
         }
     }
     if (players.count(QQ) == 0) {
-        return;
+        return false;
     }
 
     if (command.size() <= 1) {
-        return;
+        return false;
     }
 
     if (command[1] == "code" && state == SetState::Night) {
@@ -402,7 +405,10 @@ void GameSet::receivePrivateMessage(int64_t QQ, vector<string> command) {
         //各玩家的晚间行动
         players[QQ]->act(command, *this);
         daybreakCheck();
+    } else {
+        return false;
     }
+    return true;
 }
 
 void GameSet::wolfTalk(string s) {

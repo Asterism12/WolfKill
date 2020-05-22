@@ -17,6 +17,6 @@ using namespace std;
 
 
 vector<string> commandAnalyse(string message);
-void groupControl(const GroupMessageEvent &event);
-void privateControl(const PrivateMessageEvent &event);
+bool groupControl(const GroupMessageEvent &event);
+bool privateControl(const PrivateMessageEvent &event);
 void destorySet(int64_t set);

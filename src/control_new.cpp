@@ -39,11 +39,11 @@ void destorySet(int64_t set) {
     gamingGroups.erase(set);
 }
 
-void groupControl(const GroupMessageEvent &event) {
+bool groupControl(const GroupMessageEvent &event) {
     bool isGaming = gamingGroups.count(event.group_id);
     vector<string> command = commandAnalyse(event.message);
     if (command[0] != ".") {
-        return;
+        return false;
     }
     if (command[1] == "start") {
         if (isGaming) {
@@ -56,17 +56,21 @@ void groupControl(const GroupMessageEvent &event) {
                 destorySet(event.group_id);
             }
         }
+        return true;
     } else if (command[1] == "exit" && isGaming) {
         //移除一个对局
         gamingGroups.erase(event.group_id);
         string msg = "已强制退出游戏模式";
         send_group_message(event.group_id, msg);
+        return true;
     } else if (command[1] == "begin0") {
         rdBeginZero[event.group_id] = true;
         send_group_message(event.group_id, "当前rd命令投骰子点数从0开始");
+        return true;
     } else if (command[1] == "begin1") {
         rdBeginZero[event.group_id] = false;
         send_group_message(event.group_id, "当前rd命令投骰子点数从1开始");
+        return true;
     } else if (command[1] == "help") {
         string msg = "使用.rd [骰子数量] [上界] 命令投骰子\n";
         msg += "使用.begin0命令使骰子下界为0\n";
@@ -78,6 +82,7 @@ void groupControl(const GroupMessageEvent &event) {
         msg += "4民4狼预女猎白痴(12人) 代码：'白痴'\n";
         msg += "4民3狼白狼王预女猎守(12人) 代码：'白狼王'";
         send_group_message(event.group_id, msg);
+        return true;
     } else if (command[1] == "rd") {
         int begin = 1;
         if (rdBeginZero.count(event.group_id) == 1 && rdBeginZero[event.group_id]) {
@@ -99,26 +104,26 @@ void groupControl(const GroupMessageEvent &event) {
             default:
                 string err1 = "格式错误，rd，rd [上界]，rd [骰子数量] [上界]";
                 send_group_message(event.group_id, err1);
-                return;
+                return true;
             }
         } catch (invalid_argument) {
             string err1 = "格式错误，rd，rd [上界]，rd [骰子数量] [上界]";
             send_group_message(event.group_id, err1);
-            return;
+            return true;
         } catch (out_of_range) {
             string err4 = "请输入一个较小的值";
             send_group_message(event.group_id, err4);
-            return;
+            return true;
         }
         if (r <= 0 || d <= 0) {
             string err2 = "请输入一个正值";
             send_group_message(event.group_id, err2);
-            return;
+            return true;
         }
         if (r > 20 || d > 1000000) {
             string err3 = "请输入一个较小的值";
             send_group_message(event.group_id, err3);
-            return;
+            return true;
         }
         std::random_device rd;
         std::mt19937 gen(rd());
@@ -138,6 +143,7 @@ void groupControl(const GroupMessageEvent &event) {
             }
             msg += "\ntotal:" + to_string(sum);
             send_group_message(event.group_id, msg);
+            return true;
         }
     } else if (command[1] == "debug") {
         if (isGaming) {
@@ -148,20 +154,23 @@ void groupControl(const GroupMessageEvent &event) {
             string msg = "本群没有正在进行的游戏";
             send_group_message(event.group_id, msg);
         }
+        return true;
     } else if (isGaming) {
-        gamingGroups[event.group_id].receiveGroupMessage(event.user_id, command);
+        return gamingGroups[event.group_id].receiveGroupMessage(event.user_id, command);
+    } else {
+        return false;
     }
 }
 
-void privateControl(const PrivateMessageEvent &event) {
+bool privateControl(const PrivateMessageEvent &event) {
     vector<string> command = commandAnalyse(event.message);
     if (command[0] != ".") {
-        return;
+        return false;
     }
     for (auto it = gamingGroups.begin(); it != gamingGroups.end(); it++) {
         if (it->second.players.count(event.user_id)) {
-            it->second.receivePrivateMessage(event.user_id, command);
-            break;
+            return it->second.receivePrivateMessage(event.user_id, command);
         }
     }
+    return false;
 }

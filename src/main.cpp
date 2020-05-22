@@ -20,16 +20,25 @@ CQ_INIT {
 
     on_private_message([](const PrivateMessageEvent &event) {
         try {
-            privateControl(event);
+            bool block = privateControl(event);
+            if (block) {
+                event.block();
+            }
         } catch (ApiError &err) {
         }
     });
 
     on_group_message([](const GroupMessageEvent &event) {
         try {
-            groupControl(event);
+            bool block = groupControl(event);
+            if (block) {
+                event.block();
+            }
         } catch (ApiError &) { // 忽略发送失败
         }
-        event.block(); // 阻止当前事件传递到下一个插件
     });
+}
+
+CQ_MENU(menu_dice_on) {
+    logging::info("菜单", "点击菜单1");
 }

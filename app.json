@@ -6,7 +6,7 @@
   "version": "1.0.0",
   "version_id": 1,
   "author": "Asterism",
-  "description": "狼人杀自助法官机器人",
+  "description": "狼人杀自助法官机器人，拉机器人入群后使用.help查看指令",
   "event": [ // 可以修改 priority 来调整插件的优先级, 其它字段不可修改, 否则将无法使用
     {
       "id": 1003,
@@ -116,12 +116,8 @@
   ],
   "menu": [ // name 字段为显示在酷Q应用菜单中的文字, function 字段对应 CQ_MENU 宏调用的参数
     {
-      "name": "菜单 1",
-      "function": "menu_demo_1"
-    },
-    {
-      "name": "菜单 2",
-      "function": "menu_demo_2"
+      "name": "开启/关闭内置骰子",
+      "function": "menu_dice_on"
     }
   ],
   "status": [],

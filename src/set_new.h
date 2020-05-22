@@ -56,8 +56,8 @@ public:
     void generateCode();
 
     void sendPrivateMessage(int64_t QQ, string msg);
-    void receivePrivateMessage(int64_t QQ, vector<string> command);
-    void receiveGroupMessage(int64_t QQ, vector<string> command);
+    bool receivePrivateMessage(int64_t QQ, vector<string> command);
+    bool receiveGroupMessage(int64_t QQ, vector<string> command);
 
     GameSet(){};
 };
