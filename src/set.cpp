@@ -1,5 +1,5 @@
-#include "set_new.h"
-#include "player_new.hpp"
+#include "set.h"
+#include "player.hpp"
 
 bool GameSet::init(vector<string> command, GroupMessageEvent event) {
     state = SetState::Setting;

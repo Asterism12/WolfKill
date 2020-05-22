@@ -1,4 +1,4 @@
-#include "control_new.h"
+#include "control.h"
 map<int64_t, GameSet> gamingGroups;
 map<int64_t, bool> rdBeginZero;//true投骰子从0开始，false从1开始
 

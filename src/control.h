@@ -10,7 +10,7 @@
 
 #include <cqcppsdk/cqcppsdk.h>
 
-#include "set_new.h"
+#include "set.h"
 
 using namespace cq;
 using namespace std;

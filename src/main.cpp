@@ -7,8 +7,7 @@
 
 #include <cqcppsdk/cqcppsdk.h>
 
-//#include "control.h"
-#include "control_new.h"
+#include "control.h"
 
 using namespace cq;
 using namespace std;
