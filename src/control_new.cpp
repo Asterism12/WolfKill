@@ -2,6 +2,7 @@
 map<int64_t, GameSet> gamingGroups;
 map<int64_t, bool> rdBeginZero;//true投骰子从0开始，false从1开始
 
+bool dice_on = true;
 vector<string> commandAnalyse(string message) {
     vector<string> res = {"."};
     vector<string> empty = {"!"};
@@ -33,6 +34,16 @@ vector<string> commandAnalyse(string message) {
     }
 
     return res;
+}
+
+void diceTurn() {
+    if (dice_on) {
+        dice_on = false;
+        logging::info("菜单", "关闭内置骰子");
+    } else {
+        dice_on = true;
+        logging::info("菜单", "开启内置骰子");
+    }
 }
 
 void destorySet(int64_t set) {
@@ -84,6 +95,9 @@ bool groupControl(const GroupMessageEvent &event) {
         send_group_message(event.group_id, msg);
         return true;
     } else if (command[1] == "rd") {
+        if (!dice_on) {
+            return false;
+        }
         int begin = 1;
         if (rdBeginZero.count(event.group_id) == 1 && rdBeginZero[event.group_id]) {
             begin = 0;

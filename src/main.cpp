@@ -24,7 +24,7 @@ CQ_INIT {
             if (block) {
                 event.block();
             }
-        } catch (ApiError &err) {
+        } catch (ApiError &) {
         }
     });
 
@@ -40,5 +40,5 @@ CQ_INIT {
 }
 
 CQ_MENU(menu_dice_on) {
-    logging::info("菜单", "点击菜单1");
+    diceTurn();
 }
