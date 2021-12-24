@@ -11,3 +11,6 @@
 
 ## SDK
 CoolQ C++ SDK https://github.com/cqmoe/cqcppsdk
+
+## Notice
+由于CoolQ已停止服务，本插件不再更新
